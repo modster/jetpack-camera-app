@@ -22,7 +22,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.jetpackcamera.permissions.ui.PermissionTemplate
@@ -41,7 +43,12 @@ fun PermissionsScreen(
     onAllPermissionsGranted: () -> Unit,
     onOpenAppSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: PermissionsViewModel = hiltViewModel()
+    viewModel: PermissionsViewModel = hiltViewModel(
+        viewModelStoreOwner = requireNotNull(LocalViewModelStoreOwner.current) {
+            "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+        },
+        key = null
+    )
 ) {
     Log.d(TAG, "PermissionsScreen")
     val permissionsUiState: PermissionsUiState by viewModel.permissionsUiState.collectAsState()

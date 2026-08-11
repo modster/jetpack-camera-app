@@ -130,7 +130,7 @@ dependencies {
     implementation(libs.androidx.tracing)
     implementation(libs.kotlinx.atomicfu)
 
-    implementation("javax.inject:javax.inject:1")
+    implementation(libs.javax.inject)
     implementation(libs.androidx.core.ktx)
     implementation(project(":data:settings"))
     implementation(project(":core:settings"))
