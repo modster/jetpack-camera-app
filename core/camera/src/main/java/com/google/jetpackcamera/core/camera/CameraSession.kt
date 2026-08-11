@@ -119,7 +119,7 @@ private val QUALITY_RANGE_MAP = mapOf(
     SD to Range.create(241, 719)
 )
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 @ExperimentalCamera2Interop
 internal suspend fun runSingleCameraSession(
     sessionSettings: PerpetualSessionSettings.SingleCamera,
@@ -128,20 +128,20 @@ internal suspend fun runSingleCameraSession(
     onImageCaptureCreated: (ImageCapture) -> Unit = {}
 ) = coroutineScope {
     Log.d(TAG, "Starting new single camera session")
-    val initialCameraSelector = transientSettings.filterNotNull().first()
+    val initialCameraSelector = cameraSessionContext.transientSettings.filterNotNull().first()
         .primaryLensFacing.toCameraSelector()
 
     // only create video use case in standard or video_only
     val videoCaptureUseCase = when (sessionSettings.captureMode) {
         CaptureMode.STANDARD, CaptureMode.VIDEO_ONLY ->
             createVideoUseCase(
-                cameraProvider.getCameraInfo(initialCameraSelector),
+                cameraSessionContext.cameraProvider.getCameraInfo(initialCameraSelector),
                 sessionSettings.aspectRatio,
                 sessionSettings.targetFrameRate,
                 sessionSettings.stabilizationMode,
                 sessionSettings.dynamicRange,
                 sessionSettings.videoQuality,
-                backgroundDispatcher
+                cameraSessionContext.backgroundDispatcher
             )
 
         else -> {
@@ -160,7 +160,7 @@ internal suspend fun runSingleCameraSession(
         )
     }
 
-    transientSettings
+    cameraSessionContext.transientSettings
         .filterNotNull()
         .distinctUntilChanged { old, new ->
             (
@@ -173,10 +173,11 @@ internal suspend fun runSingleCameraSession(
         }
         .collectLatest { currentTransientSettings ->
             coroutineScope sessionScope@{
-                cameraProvider.unbindAll()
+                cameraSessionContext.cameraProvider.unbindAll()
                 val currentCameraSelector = currentTransientSettings.primaryLensFacing
                     .toCameraSelector()
-                val cameraInfo = cameraProvider.getCameraInfo(currentCameraSelector)
+                val cameraInfo =
+                    cameraSessionContext.cameraProvider.getCameraInfo(currentCameraSelector)
                 val camera2Info = Camera2CameraInfo.from(cameraInfo)
                 val cameraId = camera2Info.cameraId
 
@@ -186,16 +187,16 @@ internal suspend fun runSingleCameraSession(
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
                         cameraConstraints?.supportedIlluminants?.contains(
                             Illuminant.LOW_LIGHT_BOOST_CAMERA_EFFECT
-                        ) == true && lowLightBoostEffectProvider != null
+                        ) == true && cameraSessionContext.lowLightBoostEffectProvider != null
                     ) {
                         captureResults = MutableStateFlow(null)
-                        cameraEffect = lowLightBoostEffectProvider.create(
+                        cameraEffect = cameraSessionContext.lowLightBoostEffectProvider.create(
                             cameraId = cameraId,
                             captureResults = captureResults,
                             coroutineScope = this@sessionScope,
                             onSceneBrightnessChanged = { boostStrength ->
                                 val strength = LowLightBoostState.Active(strength = boostStrength)
-                                currentCameraState.update { old ->
+                                cameraSessionContext.currentCameraState.update { old ->
                                     if (old.lowLightBoostState != strength) {
                                         old.copy(lowLightBoostState = strength)
                                     } else {
@@ -205,7 +206,7 @@ internal suspend fun runSingleCameraSession(
                             },
                             onLowLightBoostError = { e ->
                                 Log.w(TAG, "Emitting LLB Error", e)
-                                currentCameraState.update { old ->
+                                cameraSessionContext.currentCameraState.update { old ->
                                     old.copy(lowLightBoostState = LowLightBoostState.Error(e))
                                 }
                             }
@@ -214,11 +215,14 @@ internal suspend fun runSingleCameraSession(
                 }
                 if (cameraEffect == null) {
                     sessionSettings.activeCameraEffect?.let { key ->
-                        cameraEffect = cameraEffectProviders[key]?.get()?.create(this@sessionScope)
+                        cameraEffect = cameraSessionContext.cameraEffectProviders[key]?.get()
+                            ?.create(this@sessionScope)
                     }
                 }
                 val useCaseGroup = createUseCaseGroup(
-                    cameraInfo = cameraProvider.getCameraInfo(currentCameraSelector),
+                    cameraInfo = cameraSessionContext.cameraProvider.getCameraInfo(
+                        currentCameraSelector
+                    ),
                     videoCaptureUseCase = videoCaptureUseCase,
                     initialTransientSettings = currentTransientSettings,
                     stabilizationMode = sessionSettings.stabilizationMode,
@@ -232,13 +236,13 @@ internal suspend fun runSingleCameraSession(
                     getImageCapture()?.let(onImageCaptureCreated)
                 }
 
-                cameraProvider.runWith(
+                cameraSessionContext.cameraProvider.runWith(
                     currentCameraSelector,
                     useCaseGroup
                 ) { camera ->
                     Log.d(TAG, "Camera session started")
                     launch {
-                        processFocusMeteringEvents(
+                        cameraSessionContext.processFocusMeteringEvents(
                             camera.cameraInfo,
                             camera.cameraControl
                         )
@@ -246,7 +250,7 @@ internal suspend fun runSingleCameraSession(
 
                     launch {
                         camera.cameraInfo.torchState.asFlow().collectLatest { torchState ->
-                            currentCameraState.update { old ->
+                            cameraSessionContext.currentCameraState.update { old ->
                                 old.copy(isTorchEnabled = torchState == TorchState.ON)
                             }
                         }
@@ -264,7 +268,7 @@ internal suspend fun runSingleCameraSession(
                             )
                         }
                         launch {
-                            currentCameraState.update { old ->
+                            cameraSessionContext.currentCameraState.update { old ->
                                 old.copy(
                                     videoQualityInfo = VideoQualityInfo(
                                         videoQuality,
@@ -287,14 +291,14 @@ internal suspend fun runSingleCameraSession(
                             .filterNotNull()
                             .distinctUntilChanged()
                             .onCompletion {
-                                currentCameraState.update { old ->
+                                cameraSessionContext.currentCameraState.update { old ->
                                     old.copy(
                                         isCameraRunning = false
                                     )
                                 }
                             }
                             .collectLatest { cameraState ->
-                                currentCameraState.update { old ->
+                                cameraSessionContext.currentCameraState.update { old ->
                                     old.copy(
                                         isCameraRunning =
                                         cameraState.type == CXCameraState.Type.OPEN
@@ -311,7 +315,7 @@ internal suspend fun runSingleCameraSession(
                             .distinctUntilChanged()
                             .onCompletion {
                                 // reset current camera state when changing cameras.
-                                currentCameraState.update { old ->
+                                cameraSessionContext.currentCameraState.update { old ->
                                     old.copy(
                                         zoomRatios = emptyMap(),
                                         linearZoomScales = emptyMap()
@@ -325,7 +329,7 @@ internal suspend fun runSingleCameraSession(
                                         zoomState.zoomRatio == currentTransientSettings
                                             .zoomRatios[currentTransientSettings.primaryLensFacing]
                                     ) {
-                                        currentCameraState.update { old ->
+                                        cameraSessionContext.currentCameraState.update { old ->
                                             old.copy(
                                                 zoomRatios = old.zoomRatios
                                                     .toMutableMap()
@@ -356,7 +360,7 @@ internal suspend fun runSingleCameraSession(
                         cameraConstraints,
                         useCaseGroup,
                         currentTransientSettings,
-                        transientSettings,
+                        cameraSessionContext.transientSettings,
                         sessionSettings
                     )
                 }
@@ -364,7 +368,7 @@ internal suspend fun runSingleCameraSession(
         }
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 @OptIn(ExperimentalCamera2Interop::class)
 internal suspend fun processTransientSettingEvents(
     camera: Camera,
@@ -400,7 +404,8 @@ internal suspend fun processTransientSettingEvents(
     }
     combine(
         transientSettings.filterNotNull(),
-        currentCameraState.asStateFlow().transform { emit(it.videoRecordingState) }
+        cameraSessionContext.currentCameraState.asStateFlow()
+            .transform { emit(it.videoRecordingState) }
     ) { newTransientSettings, videoRecordingState ->
         return@combine Pair(newTransientSettings, videoRecordingState)
     }.collect { transientPair ->
@@ -464,7 +469,7 @@ internal suspend fun processTransientSettingEvents(
     }
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 @ExperimentalCamera2Interop
 private suspend fun updateCamera2RequestOptions(
     camera: Camera,
@@ -582,7 +587,7 @@ internal fun applyDeviceRotation(deviceRotation: DeviceRotation, useCaseGroup: U
     }
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 internal fun createUseCaseGroup(
     cameraInfo: CameraInfo,
     initialTransientSettings: TransientSessionSettings,
@@ -733,7 +738,7 @@ private fun getAspectRatioForUseCase(sensorLandscapeRatio: Float, aspectRatio: A
         }
     }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 private fun createPreviewUseCase(
     cameraInfo: CameraInfo,
     aspectRatio: AspectRatio,
@@ -768,7 +773,7 @@ private fun createPreviewUseCase(
 }.build()
     .apply {
         setSurfaceProvider { surfaceRequest ->
-            surfaceRequests.update { surfaceRequest }
+            cameraSessionContext.surfaceRequests.update { surfaceRequest }
         }
     }
 
@@ -809,7 +814,7 @@ private fun getResolutionSelector(
     return ResolutionSelector.Builder().setAspectRatioStrategy(aspectRatioStrategy).build()
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 private fun setFlashModeInternal(
     imageCapture: ImageCapture,
     flashMode: FlashMode,
@@ -825,7 +830,7 @@ private fun setFlashModeInternal(
                 listener: ImageCapture.ScreenFlashListener
             ) {
                 Log.d(TAG, "ImageCapture.ScreenFlash: apply")
-                screenFlashEvents.trySend(
+                cameraSessionContext.screenFlashEvents.trySend(
                     CameraSystem.ScreenFlashEvent(CameraSystem.ScreenFlashEvent.Type.APPLY_UI) {
                         listener.onCompleted()
                     }
@@ -834,7 +839,7 @@ private fun setFlashModeInternal(
 
             override fun clear() {
                 Log.d(TAG, "ImageCapture.ScreenFlash: clear")
-                screenFlashEvents.trySend(
+                cameraSessionContext.screenFlashEvents.trySend(
                     CameraSystem.ScreenFlashEvent(CameraSystem.ScreenFlashEvent.Type.CLEAR_UI) {}
                 )
             }
@@ -999,7 +1004,7 @@ private fun getPendingRecording(
     }
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 @OptIn(ExperimentalPersistentRecording::class)
 private suspend fun startVideoRecordingInternal(
     context: Context,
@@ -1009,7 +1014,7 @@ private suspend fun startVideoRecordingInternal(
     onVideoRecord: (OnVideoRecordEvent) -> Unit
 ): Recording {
     // set the camerastate to starting
-    currentCameraState.update { old ->
+    cameraSessionContext.currentCameraState.update { old ->
         old.copy(videoRecordingState = VideoRecordingState.Starting(initialRecordingSettings))
     }
 
@@ -1039,7 +1044,7 @@ private suspend fun startVideoRecordingInternal(
         Log.d(TAG, onVideoRecordEvent.toString())
         when (onVideoRecordEvent) {
             is VideoRecordEvent.Start -> {
-                currentCameraState.update { old ->
+                cameraSessionContext.currentCameraState.update { old ->
                     old.copy(
                         videoRecordingState = VideoRecordingState.Active.Recording(
                             audioAmplitude = onVideoRecordEvent.recordingStats.audioStats
@@ -1053,7 +1058,7 @@ private suspend fun startVideoRecordingInternal(
             }
 
             is VideoRecordEvent.Pause -> {
-                currentCameraState.update { old ->
+                cameraSessionContext.currentCameraState.update { old ->
                     old.copy(
                         videoRecordingState = VideoRecordingState.Active.Paused(
                             audioAmplitude = onVideoRecordEvent.recordingStats.audioStats
@@ -1067,7 +1072,7 @@ private suspend fun startVideoRecordingInternal(
             }
 
             is VideoRecordEvent.Resume -> {
-                currentCameraState.update { old ->
+                cameraSessionContext.currentCameraState.update { old ->
                     old.copy(
                         videoRecordingState = VideoRecordingState.Active.Recording(
                             audioAmplitude = onVideoRecordEvent.recordingStats.audioStats
@@ -1081,7 +1086,7 @@ private suspend fun startVideoRecordingInternal(
             }
 
             is VideoRecordEvent.Status -> {
-                currentCameraState.update { old ->
+                cameraSessionContext.currentCameraState.update { old ->
                     // don't want to change state from paused to recording if status changes while paused
                     if (old.videoRecordingState is VideoRecordingState.Active.Paused) {
                         old.copy(
@@ -1111,7 +1116,7 @@ private suspend fun startVideoRecordingInternal(
                 when (onVideoRecordEvent.error) {
                     ERROR_NONE -> {
                         // update recording state to inactive with the final values of the recording.
-                        currentCameraState.update { old ->
+                        cameraSessionContext.currentCameraState.update { old ->
                             old.copy(
                                 videoRecordingState = VideoRecordingState.Inactive(
                                     finalElapsedTimeNanos = onVideoRecordEvent.recordingStats
@@ -1127,7 +1132,7 @@ private suspend fun startVideoRecordingInternal(
                     }
 
                     ERROR_DURATION_LIMIT_REACHED -> {
-                        currentCameraState.update { old ->
+                        cameraSessionContext.currentCameraState.update { old ->
                             old.copy(
                                 videoRecordingState = VideoRecordingState.Inactive(
                                     finalElapsedTimeNanos = maxDurationMillis.milliseconds
@@ -1152,7 +1157,7 @@ private suspend fun startVideoRecordingInternal(
                                 )
                             )
                         )
-                        currentCameraState.update { old ->
+                        cameraSessionContext.currentCameraState.update { old ->
                             old.copy(
                                 videoRecordingState = VideoRecordingState.Inactive(
                                     finalElapsedTimeNanos = onVideoRecordEvent.recordingStats
@@ -1167,7 +1172,7 @@ private suspend fun startVideoRecordingInternal(
     }
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 private suspend fun runVideoRecording(
     videoCapture: VideoCapture<Recorder>,
     captureTypeSuffix: String,
@@ -1235,12 +1240,12 @@ private suspend fun runVideoRecording(
     }
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 internal suspend fun processVideoControlEvents(
     videoCapture: VideoCapture<Recorder>?,
     captureTypeSuffix: String
 ) = coroutineScope {
-    for (event in videoCaptureControlEvents) {
+    for (event in cameraSessionContext.videoCaptureControlEvents) {
         when (event) {
             is VideoCaptureControlEvent.StartRecordingEvent -> {
                 if (videoCapture == null) {
@@ -1251,13 +1256,13 @@ internal suspend fun processVideoControlEvents(
                 runVideoRecording(
                     videoCapture,
                     captureTypeSuffix,
-                    context,
+                    cameraSessionContext.context,
                     event.maxVideoDuration,
-                    transientSettings,
+                    cameraSessionContext.transientSettings,
                     event.saveLocation,
-                    videoCaptureControlEvents,
+                    cameraSessionContext.videoCaptureControlEvents,
                     event.onVideoRecord,
-                    filePathGenerator
+                    cameraSessionContext.filePathGenerator
                 )
             }
 
@@ -1269,7 +1274,7 @@ internal suspend fun processVideoControlEvents(
 /**
  * Applies a CaptureCallback to the provided image capture builder
  */
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 @OptIn(ExperimentalCamera2Interop::class)
 private fun Preview.Builder.updateCameraStateWithCaptureResults(
     targetCameraInfo: CameraInfo,
@@ -1299,7 +1304,7 @@ private fun Preview.Builder.updateCameraStateWithCaptureResults(
 
                         else -> LowLightBoostState.Inactive
                     }
-                    currentCameraState.update { old ->
+                    cameraSessionContext.currentCameraState.update { old ->
                         if (old.lowLightBoostState != boostStrength) {
                             old.copy(lowLightBoostState = boostStrength)
                         } else {
@@ -1315,7 +1320,7 @@ private fun Preview.Builder.updateCameraStateWithCaptureResults(
                 ) {
                     // update camerastate with zoom ratio
                     val newZoomRatio = result.get(CaptureResult.CONTROL_ZOOM_RATIO)
-                    currentCameraState.update { old ->
+                    cameraSessionContext.currentCameraState.update { old ->
                         if (newZoomRatio != null &&
                             old.zoomRatios[targetCameraInfo.appLensFacing] != newZoomRatio
                         ) {
@@ -1339,7 +1344,7 @@ private fun Preview.Builder.updateCameraStateWithCaptureResults(
                     } else {
                         null
                     }
-                    currentCameraState.update { old ->
+                    cameraSessionContext.currentCameraState.update { old ->
                         if (old.debugInfo.logicalCameraId != logicalCameraId ||
                             old.debugInfo.physicalCameraId != physicalCameraId
                         ) {
@@ -1351,7 +1356,7 @@ private fun Preview.Builder.updateCameraStateWithCaptureResults(
                         }
                     }
                     if (!isFirstFrameTimestampUpdated.value) {
-                        currentCameraState.update { old ->
+                        cameraSessionContext.currentCameraState.update { old ->
                             old.copy(
                                 sessionFirstFrameTimestamp = SystemClock.elapsedRealtimeNanos()
                             )
@@ -1368,7 +1373,7 @@ private fun Preview.Builder.updateCameraStateWithCaptureResults(
     return this
 }
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 private fun publishStabilizationMode(result: TotalCaptureResult) {
     val nativeVideoStabilizationMode = result.get(CaptureResult.CONTROL_VIDEO_STABILIZATION_MODE)
     val stabilizationMode = when (nativeVideoStabilizationMode) {
@@ -1387,7 +1392,7 @@ private fun publishStabilizationMode(result: TotalCaptureResult) {
         }
     }
 
-    currentCameraState.update { old ->
+    cameraSessionContext.currentCameraState.update { old ->
         if (old.stabilizationMode != stabilizationMode) {
             old.copy(stabilizationMode = stabilizationMode)
         } else {

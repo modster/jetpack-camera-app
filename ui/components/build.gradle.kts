@@ -16,8 +16,7 @@
 
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.legacy.kapt)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -48,15 +47,15 @@ android {
     }
     kotlin {
         jvmToolchain(17)
+        compilerOptions {
+            freeCompilerArgs.add("-Xcontext-parameters")
+        }
     }
     buildFeatures {
         buildConfig = true
         compose = true
     }
 
-    kotlinOptions {
-        freeCompilerArgs += "-Xcontext-receivers"
-    }
 }
 
 dependencies {

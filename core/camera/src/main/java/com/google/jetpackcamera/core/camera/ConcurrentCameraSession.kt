@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "ConcurrentCameraSession"
 
-context(CameraSessionContext)
+context(cameraSessionContext: CameraSessionContext)
 @SuppressLint("RestrictedApi")
 internal suspend fun runConcurrentCameraSession(
     sessionSettings: PerpetualSessionSettings.ConcurrentCamera,
@@ -54,13 +54,13 @@ internal suspend fun runConcurrentCameraSession(
             "[primary: $primaryLensFacing, secondary: $secondaryLensFacing]"
     )
 
-    val initialTransientSettings = transientSettings
+    val initialTransientSettings = cameraSessionContext.transientSettings
         .filterNotNull()
         .first()
 
     val videoCapture = if (sessionSettings.captureMode != CaptureMode.IMAGE_ONLY) {
         createVideoUseCase(
-            cameraProvider.getCameraInfo(
+            cameraSessionContext.cameraProvider.getCameraInfo(
                 initialTransientSettings.primaryLensFacing.toCameraSelector()
             ),
             sessionSettings.aspectRatio,
@@ -68,7 +68,7 @@ internal suspend fun runConcurrentCameraSession(
             StabilizationMode.OFF,
             DynamicRange.SDR,
             VideoQuality.UNSPECIFIED,
-            backgroundDispatcher
+            cameraSessionContext.backgroundDispatcher
         )
     } else {
         null
@@ -103,7 +103,10 @@ internal suspend fun runConcurrentCameraSession(
         )
     )
 
-    cameraProvider.runWithConcurrent(cameraConfigs, useCaseGroup) { concurrentCamera ->
+    cameraSessionContext.cameraProvider.runWithConcurrent(
+        cameraConfigs,
+        useCaseGroup
+    ) { concurrentCamera ->
         Log.d(TAG, "Concurrent camera session started")
         // todo: concurrent camera only ever lists one camera
         val primaryCamera = concurrentCamera.cameras.first {
@@ -111,7 +114,7 @@ internal suspend fun runConcurrentCameraSession(
         }
 
         launch {
-            processFocusMeteringEvents(
+            cameraSessionContext.processFocusMeteringEvents(
                 primaryCamera.cameraInfo,
                 primaryCamera.cameraControl
             )
@@ -126,7 +129,7 @@ internal suspend fun runConcurrentCameraSession(
 
         launch {
             sessionSettings.primaryCameraInfo.torchState.asFlow().collectLatest { torchState ->
-                currentCameraState.update { old ->
+                cameraSessionContext.currentCameraState.update { old ->
                     old.copy(isTorchEnabled = torchState == TorchState.ON)
                 }
             }
@@ -139,14 +142,14 @@ internal suspend fun runConcurrentCameraSession(
                 .filterNotNull()
                 .distinctUntilChanged()
                 .onCompletion {
-                    currentCameraState.update { old ->
+                    cameraSessionContext.currentCameraState.update { old ->
                         old.copy(
                             isCameraRunning = false
                         )
                     }
                 }
                 .collectLatest { cameraState ->
-                    currentCameraState.update { old ->
+                    cameraSessionContext.currentCameraState.update { old ->
                         old.copy(
                             isCameraRunning = cameraState.type == CXCameraState.Type.OPEN
                         )
@@ -158,7 +161,7 @@ internal suspend fun runConcurrentCameraSession(
         launch {
             primaryCamera.cameraInfo.zoomState.asFlow().filterNotNull().distinctUntilChanged()
                 .collectLatest { zoomState ->
-                    val settings = transientSettings.value
+                    val settings = cameraSessionContext.transientSettings.value
                     // TODO(b/405987189): remove checks after buggy zoomState is fixed
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
                         if (zoomState.zoomRatio != 1.0f ||
@@ -166,7 +169,7 @@ internal suspend fun runConcurrentCameraSession(
                             zoomState.zoomRatio ==
                             settings.zoomRatios[primaryCamera.cameraInfo.appLensFacing]
                         ) {
-                            currentCameraState.update { old ->
+                            cameraSessionContext.currentCameraState.update { old ->
                                 old.copy(
                                     zoomRatios = old.zoomRatios.toMutableMap().apply {
                                         put(
@@ -193,7 +196,7 @@ internal suspend fun runConcurrentCameraSession(
             cameraConstraints,
             useCaseGroup,
             initialTransientSettings,
-            transientSettings,
+            cameraSessionContext.transientSettings,
             null
         )
     }
