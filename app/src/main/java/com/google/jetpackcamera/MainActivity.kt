@@ -136,8 +136,7 @@ class MainActivity : ComponentActivity() {
 
                     is Success -> {
                         JetpackCameraTheme(
-                            darkTheme = isInDarkMode(uiState = uiState),
-                            dynamicColor = false
+                            darkTheme = isInDarkMode(uiState = uiState)
                         ) {
                             Surface(
                                 modifier = Modifier

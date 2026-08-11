@@ -1,5 +1,7 @@
 # TODO  
 
+## General
+
 - [ ] Architecture needs simplification
 - [ ] Plugin System needs inventing
 - [ ] UI needs a facelift
@@ -10,14 +12,15 @@
 - [x] import examples from CameraX-Composable-Demo
 - [ ] make project website with gh-pages
 - [ ] add ioannisa/CameraX-Composable-Demo, android/camera-samples to acknowledgements
+
+## New Features
+
+- [ ] TORCH mode
+- [ ] aspect ratio: CUSTOM: it matches the user's screen size
 - [ ] Hardware capture buttons
   - [ ] on press down commence capture (i.e BulbModeCapture(...)
   - [ ] on release down end BulbModeCapture
   - [ ] on press up toggle RegularCapture(...)
   - [ ] add a user preference to switch up for down
-- [ ] new features
-  - [ ] TORCH mode
-  - [ ] aspect ratio: CUSTOM: it matches the user's screen size
-  - [ ] 
 
 ---

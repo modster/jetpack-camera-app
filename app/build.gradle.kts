@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.androidx.tracing)
     implementation(project(":core:common"))
     implementation(project(":feature:postcapture"))
+    implementation(libs.androidx.ui.text.google.fonts)
     // Compose
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)

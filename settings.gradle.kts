@@ -21,6 +21,9 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0"
+}
 
 @Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
@@ -58,7 +61,6 @@ include(":ui:uistate:capture")
 include(":ui:uistateadapter:capture")
 include(":ui:components")
 include(":ui:components:capture")
-include(":data:model")
 include(":core:settings")
 include(":core:model")
 include(":ui:uistate:postcapture")

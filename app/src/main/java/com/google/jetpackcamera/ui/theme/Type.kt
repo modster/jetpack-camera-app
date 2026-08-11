@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
-import com.android.camera.coretheme.R
+import com.google.jetpackcamera.R
 
 val provider =
     GoogleFont.Provider(
