@@ -15,4 +15,9 @@
   - [ ] on release down end BulbModeCapture
   - [ ] on press up toggle RegularCapture(...)
   - [ ] add a user preference to switch up for down
-- [ ] 
+- [ ] new features
+  - [ ] TORCH mode
+  - [ ] aspect ratio: CUSTOM: it matches the user's screen size
+  - [ ] 
+
+---
