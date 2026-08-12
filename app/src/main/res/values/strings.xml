@@ -20,4 +20,13 @@
     <string name="jca_loading">Loading App…</string>
     <string name="camera_not_available">Camera not available</string>
     <string name="external_capture_uri_not_supplied">No parcelable URI is supplied for external capture.</string>
+    <string name="feature_set_title">Feature set</string>
+    <string name="feature_set_back_button">Navigate back to the previous screen</string>
+    <string name="feature_set_navigation_label">Open %1$s module</string>
+    <string name="feature_set_preview_title">Preview</string>
+    <string name="feature_set_preview_description">Camera preview and capture flow</string>
+    <string name="feature_set_settings_title">Settings</string>
+    <string name="feature_set_settings_description">Camera and app configuration</string>
+    <string name="feature_set_example_title">Example</string>
+    <string name="feature_set_example_description">Sample feature module demonstrating the catalog</string>
 </resources>

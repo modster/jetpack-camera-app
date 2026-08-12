@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="example_feature_title">Example feature</string>
+    <string name="example_feature_back_button">Navigate back to the previous screen</string>
+    <string name="example_feature_heading">Example module</string>
+    <string name="example_feature_description">This sample module demonstrates a reusable feature module with its own screen and navigation.</string>
+    <string name="example_feature_status">Status: Ready to extend</string>
+</resources>

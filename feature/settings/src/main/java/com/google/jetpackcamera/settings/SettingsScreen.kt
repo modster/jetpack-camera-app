@@ -22,9 +22,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -82,7 +85,8 @@ fun SettingsScreen(
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
         }, null
     ),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToFeatureSet: () -> Unit = {}
 ) {
     val settingsUiState by viewModel.settingsUiState.collectAsState()
 
@@ -90,6 +94,7 @@ fun SettingsScreen(
         uiState = settingsUiState,
         versionInfo = versionInfo,
         onNavigateBack = onNavigateBack,
+        onNavigateToFeatureSet = onNavigateToFeatureSet,
         setDefaultLensFacing = viewModel::setDefaultLensFacing,
         setFlashMode = viewModel::setFlashMode,
         setTargetFrameRate = viewModel::setTargetFrameRate,
@@ -121,6 +126,7 @@ private fun SettingsScreen(
     uiState: SettingsUiState,
     versionInfo: VersionInfoHolder,
     onNavigateBack: () -> Unit = {},
+    onNavigateToFeatureSet: () -> Unit = {},
     setDefaultLensFacing: (LensFacing) -> Unit = {},
     setFlashMode: (FlashMode) -> Unit = {},
     setTargetFrameRate: (Int) -> Unit = {},
@@ -159,6 +165,7 @@ private fun SettingsScreen(
                 SettingsList(
                     uiState = uiState,
                     versionInfo = versionInfo,
+                    onNavigateToFeatureSet = onNavigateToFeatureSet,
                     setDefaultLensFacing = setDefaultLensFacing,
                     setFlashMode = setFlashMode,
                     setTargetFrameRate = setTargetFrameRate,
@@ -181,6 +188,7 @@ private fun SettingsScreen(
 internal fun SettingsList(
     uiState: SettingsUiState.Enabled,
     versionInfo: VersionInfoHolder,
+    onNavigateToFeatureSet: () -> Unit = {},
     setDefaultLensFacing: (LensFacing) -> Unit = {},
     setFlashMode: (FlashMode) -> Unit = {},
     setTargetFrameRate: (Int) -> Unit = {},
@@ -266,6 +274,13 @@ internal fun SettingsList(
         versionName = versionInfo.versionName,
         buildType = versionInfo.buildType
     )
+
+    Button(
+        onClick = onNavigateToFeatureSet,
+        modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
+    ) {
+        Text(text = stringResource(id = R.string.feature_set_button_label))
+    }
 }
 
 // will allow you to open stabilization popup or give disabled rationale

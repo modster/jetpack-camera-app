@@ -199,4 +199,5 @@
 
     <!-- Version info strings -->
     <string name="version_info_title">Version</string>
+    <string name="feature_set_button_label">Open feature set</string>
 </resources>

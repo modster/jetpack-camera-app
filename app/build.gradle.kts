@@ -121,9 +121,13 @@ dependencies {
 
     // Compose - Testing
     androidTestImplementation(libs.compose.junit)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.junit)
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.truth)
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.rules)
@@ -158,6 +162,9 @@ dependencies {
 
     // Camera Preview
     implementation(project(":feature:preview"))
+
+    // Example feature module
+    implementation(project(":feature:example"))
 
     // Settings Screen
     implementation(project(":feature:settings"))

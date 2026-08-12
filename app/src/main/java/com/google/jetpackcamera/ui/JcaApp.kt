@@ -25,12 +25,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.google.jetpackcamera.R
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.jetpackcamera.BuildConfig
+import com.google.jetpackcamera.feature.example.ExampleFeatureRoute
+import com.google.jetpackcamera.feature.example.exampleFeatureScreen
+import com.google.jetpackcamera.feature.example.navigateToExampleFeature
 import com.google.jetpackcamera.feature.postcapture.PostCaptureScreen
 import com.google.jetpackcamera.feature.preview.navigation.navigateToPreview
 import com.google.jetpackcamera.feature.preview.navigation.popUpToPreview
@@ -44,6 +49,7 @@ import com.google.jetpackcamera.permissions.navigation.permissionsScreen
 import com.google.jetpackcamera.permissions.navigation.popUpToPermissions
 import com.google.jetpackcamera.settings.SettingsScreen
 import com.google.jetpackcamera.settings.VersionInfoHolder
+import com.google.jetpackcamera.ui.Routes.FEATURE_SET_ROUTE
 import com.google.jetpackcamera.ui.Routes.POST_CAPTURE_ROUTE
 import com.google.jetpackcamera.ui.Routes.SETTINGS_ROUTE
 
@@ -128,6 +134,61 @@ private fun JetpackCameraNavHost(
         )
 
         composable(
+            route = FEATURE_SET_ROUTE,
+            enterTransition = {
+                fadeIn(
+                    animationSpec = tween(easing = LinearEasing)
+                ) + slideIntoContainer(
+                    animationSpec = tween(easing = EaseIn),
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    animationSpec = tween(easing = EaseOut),
+                    towards = AnimatedContentTransitionScope.SlideDirection.End
+                )
+            }
+        ) {
+            FeatureSetScreen(
+                featureItems = listOf(
+                    FeatureSetItem(
+                        title = stringResource(R.string.feature_set_preview_title),
+                        route = "preview",
+                        description = stringResource(R.string.feature_set_preview_description),
+                        enabled = true
+                    ),
+                    FeatureSetItem(
+                        title = stringResource(R.string.feature_set_settings_title),
+                        route = SETTINGS_ROUTE,
+                        description = stringResource(R.string.feature_set_settings_description),
+                        enabled = true
+                    ),
+                    FeatureSetItem(
+                        title = stringResource(R.string.feature_set_example_title),
+                        route = ExampleFeatureRoute.ROUTE,
+                        description = stringResource(R.string.feature_set_example_description),
+                        enabled = true
+                    )
+                ),
+                onFeatureSelected = { featureItem ->
+                    when (featureItem.route) {
+                        "preview" -> navController.navigateToPreview {
+                            popUpTo(FEATURE_SET_ROUTE)
+                        }
+                        SETTINGS_ROUTE -> navController.navigate(SETTINGS_ROUTE) {
+                            popUpTo(FEATURE_SET_ROUTE)
+                        }
+                        ExampleFeatureRoute.ROUTE -> navController.navigateToExampleFeature {
+                            popUpTo(FEATURE_SET_ROUTE)
+                        }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
             route = SETTINGS_ROUTE,
             enterTransition = {
                 fadeIn(
@@ -149,9 +210,12 @@ private fun JetpackCameraNavHost(
                     versionName = BuildConfig.VERSION_NAME,
                     buildType = BuildConfig.BUILD_TYPE
                 ),
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToFeatureSet = { navController.navigate(FEATURE_SET_ROUTE) }
             )
         }
+
+        exampleFeatureScreen(onNavigateBack = { navController.popBackStack() })
 
         composable(
             POST_CAPTURE_ROUTE
