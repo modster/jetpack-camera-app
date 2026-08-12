@@ -295,7 +295,6 @@ class PostCaptureViewModel @Inject constructor(
     /**
      * saves the given media
      */
-
     private suspend fun saveMedia(mediaDescriptor: MediaDescriptor.Content) {
         val cookieInt = snackBarController.incrementAndGetSnackBarCount()
         val cookie = "MediaSave-$cookieInt"

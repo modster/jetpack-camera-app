@@ -217,6 +217,7 @@ internal fun SettingsList(
         lowLightBoostPriorityUiState = uiState.lowLightBoostPriorityUiState,
         setLowLightBoostPriority = setLowLightBoostPriority
     )
+
     SectionHeader(title = stringResource(R.string.section_title_recording_settings))
 
     RecordingAudioSetting(

@@ -126,6 +126,7 @@ private fun BrightnessMaximization(onInitialBrightnessCalculated: (Float) -> Uni
     val initialScreenBrightness = remember {
         getScreenBrightness(activity.window)
     }
+
     LaunchedEffect(initialScreenBrightness) {
         onInitialBrightnessCalculated(initialScreenBrightness)
     }
