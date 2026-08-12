@@ -29,4 +29,6 @@
     <string name="feature_set_settings_description">Camera and app configuration</string>
     <string name="feature_set_example_title">Example</string>
     <string name="feature_set_example_description">Sample feature module demonstrating the catalog</string>
+    <string name="feature_set_hud_title">HUD</string>
+    <string name="feature_set_hud_description">Forked camera screen with reticle, luminosity graph, exposure chips, and quick settings</string>
 </resources>

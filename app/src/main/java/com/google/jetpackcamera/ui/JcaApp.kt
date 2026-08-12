@@ -36,6 +36,9 @@ import com.google.jetpackcamera.BuildConfig
 import com.google.jetpackcamera.feature.example.ExampleFeatureRoute
 import com.google.jetpackcamera.feature.example.exampleFeatureScreen
 import com.google.jetpackcamera.feature.example.navigateToExampleFeature
+import com.google.jetpackcamera.feature.hud.navigation.HudRoute
+import com.google.jetpackcamera.feature.hud.navigation.hudScreen
+import com.google.jetpackcamera.feature.hud.navigation.navigateToHud
 import com.google.jetpackcamera.feature.postcapture.PostCaptureScreen
 import com.google.jetpackcamera.feature.preview.navigation.navigateToPreview
 import com.google.jetpackcamera.feature.preview.navigation.popUpToPreview
@@ -169,6 +172,12 @@ private fun JetpackCameraNavHost(
                         route = ExampleFeatureRoute.ROUTE,
                         description = stringResource(R.string.feature_set_example_description),
                         enabled = true
+                    ),
+                    FeatureSetItem(
+                        title = stringResource(R.string.feature_set_hud_title),
+                        route = HudRoute.ROUTE,
+                        description = stringResource(R.string.feature_set_hud_description),
+                        enabled = true
                     )
                 ),
                 onFeatureSelected = { featureItem ->
@@ -180,6 +189,9 @@ private fun JetpackCameraNavHost(
                             popUpTo(FEATURE_SET_ROUTE)
                         }
                         ExampleFeatureRoute.ROUTE -> navController.navigateToExampleFeature {
+                            popUpTo(FEATURE_SET_ROUTE)
+                        }
+                        HudRoute.ROUTE -> navController.navigateToHud {
                             popUpTo(FEATURE_SET_ROUTE)
                         }
                     }
@@ -216,6 +228,11 @@ private fun JetpackCameraNavHost(
         }
 
         exampleFeatureScreen(onNavigateBack = { navController.popBackStack() })
+
+        hudScreen(
+            onNavigateBack = { navController.popBackStack() },
+            onNavigateToSettings = { navController.navigate(SETTINGS_ROUTE) }
+        )
 
         composable(
             POST_CAPTURE_ROUTE

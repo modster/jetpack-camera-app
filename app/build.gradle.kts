@@ -166,6 +166,9 @@ dependencies {
     // Example feature module
     implementation(project(":feature:example"))
 
+    // HUD camera feature module
+    implementation(project(":feature:hud"))
+
     // Settings Screen
     implementation(project(":feature:settings"))
 
