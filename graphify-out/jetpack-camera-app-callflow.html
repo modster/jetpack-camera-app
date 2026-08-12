@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>jetpack-camera-app — Complete Call Flow &amp; Architecture Documentation</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root {
+  --bg: #0f172a; --surface: #1e293b; --border: #334155;
+  --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8;
+  --warn: #fbbf24; --err: #f87171; --ok: #34d399;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+h1 { font-size: 2.4rem; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+h2 { font-size: 1.7rem; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+h3 { font-size: 1.25rem; margin: 32px 0 12px; color: var(--accent); }
+h4 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--warn); }
+p { margin: 8px 0; color: var(--muted); }
+.subtitle { color: var(--muted); font-size: 1.1rem; margin-bottom: 32px; }
+.mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 20px 0; overflow-x: auto; position: relative; }
+.mermaid.is-enhanced { padding: 0; overflow: hidden; min-height: 260px; }
+.mermaid-viewport { padding: 54px 24px 24px; overflow: hidden; cursor: grab; touch-action: none; min-height: 260px; }
+.mermaid-viewport.is-dragging { cursor: grabbing; }
+.mermaid-viewport svg { max-width: none !important; height: auto; transform-origin: 0 0; transition: transform 120ms ease; }
+.mermaid-toolbar { position: absolute; top: 10px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(15,23,42,0.92); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+.mermaid-toolbar button, .mermaid-toolbar .zoom-level { height: 28px; min-width: 32px; border: 1px solid var(--border); border-radius: 6px; background: #1e293b; color: var(--text); font: 600 0.78rem system-ui, sans-serif; display: inline-flex; align-items: center; justify-content: center; }
+.mermaid-toolbar button { cursor: pointer; }
+.mermaid-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+.mermaid-toolbar .zoom-level { min-width: 52px; color: var(--muted); background: transparent; }
+.call-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.92rem; }
+.call-table th { background: #1a2744; color: var(--accent); text-align: left; padding: 10px 14px; border: 1px solid var(--border); }
+.call-table td { padding: 8px 14px; border: 1px solid var(--border); vertical-align: top; }
+.call-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+.tag-async { background: #7c3aed33; color: #a78bfa; }
+.tag-class { background: #05966933; color: var(--ok); }
+.tag-func { background: #2563eb33; color: var(--accent); }
+.tag-cmd { background: #d9770633; color: var(--warn); }
+.tag-endpoint { background: #dc262633; color: var(--err); }
+.tag-hook { background: #db277733; color: #f472b6; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin: 16px 0; }
+.arrow-chain { font-family: 'Fira Code', monospace; font-size: 0.85rem; color: var(--accent); padding: 10px; background: rgba(56,189,248,0.06); border-radius: 6px; }
+code { font-family: 'Fira Code', 'Cascadia Code', monospace; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; font-size: 0.88em; }
+ul, ol { margin: 8px 0 8px 24px; color: var(--muted); }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+.nav { position: sticky; top: 0; background: var(--bg); z-index: 10; padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.9rem; }
+.nav a { text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+@media (max-width: 768px) { .container { padding: 16px; } h1 { font-size: 1.8rem; } }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>jetpack-camera-app — Complete Call Flow &amp; Architecture Documentation</h1>
+<p class="subtitle">Generated from graphify knowledge graph: 427 nodes, 1025 edges, 25 communities. Commit: 913a04c</p>
+
+<div class="nav">
+    <a href="#overview">Architecture Overview</a>
+    <a href="#extract-pipeline">Extraction Pipeline</a>
+    <a href="#build-graph">Graph Build</a>
+    <a href="#cli-skills">CLI &amp; Skill Installers</a>
+    <a href="#ingest-cache-update">Ingestion &amp; Updates</a>
+    <a href="#cacheparam-app-androidtest">Cacheparam App Androidtest</a>
+    <a href="#mediastoreentryexistsaftertimestamp-app-androidt">Mediastoreentryexistsaftertimestamp App Androidtest</a>
+    <a href="#jetpackcameraapplication-app-com">Jetpackcameraapplication App Com</a>
+</div>
+
+<!-- ====== Architecture Overview ====== -->
+<h2 id="overview">1. Architecture Overview</h2>
+
+<div class="mermaid">
+
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    EXTRACT_PIPELINE_5F350230("Extraction Pipeline<br/><small>57 nodes</small>")
+    class EXTRACT_PIPELINE_5F350230 module;
+    BUILD_GRAPH_321CBB04("Graph Build<br/><small>1 nodes</small>")
+    class BUILD_GRAPH_321CBB04 module;
+    CLI_SKILLS_9964CBB8("CLI &amp; Skill Installers<br/><small>14 nodes</small>")
+    class CLI_SKILLS_9964CBB8 module;
+    INGEST_CACHE_UPDATE_FF457338("Ingestion &amp; Updates<br/><small>352 nodes</small>")
+    class INGEST_CACHE_UPDATE_FF457338 module;
+    CACHEPARAM_APP_ANDROIDTEST_200EB01E("Cacheparam App Androidtest<br/><small>1 nodes</small>")
+    class CACHEPARAM_APP_ANDROIDTEST_200EB01E module;
+    MEDIASTOREENTRYEXISTSAFTERTIMESTAMP_APP_ANDROIDT_24967384("Mediastoreentryexistsaftertimestamp App Androidtest<br/><small>1 nodes</small>")
+    class MEDIASTOREENTRYEXISTSAFTERTIMESTAMP_APP_ANDROIDT_24967384 module;
+    JETPACKCAMERAAPPLICATION_APP_COM_8C1A793F("Jetpackcameraapplication App Com<br/><small>1 nodes</small>")
+    class JETPACKCAMERAAPPLICATION_APP_COM_8C1A793F module;
+    EXTRACT_PIPELINE_5F350230 -->|imports x6| INGEST_CACHE_UPDATE_FF457338
+    INGEST_CACHE_UPDATE_FF457338 -->|imports| EXTRACT_PIPELINE_5F350230
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h4>Architecture Layers</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>Layer</th><th>Nodes</th><th>Communities</th></tr>
+      <tr><td>Extraction Pipeline</td><td>57</td><td><code>4, 12, 15, 16, 17</code></td></tr><tr><td>Graph Build</td><td>1</td><td><code>24</code></td></tr><tr><td>CLI &amp; Skill Installers</td><td>14</td><td><code>10</code></td></tr><tr><td>Ingestion &amp; Updates</td><td>352</td><td><code>0, 1, 2, 3, 5, 6, 7, 8, 9, 11, 13, 14, 18, 19, 20</code></td></tr><tr><td>Cacheparam App Androidtest</td><td>1</td><td><code>21</code></td></tr><tr><td>Mediastoreentryexistsaftertimestamp App Androidtest</td><td>1</td><td><code>22</code></td></tr><tr><td>Jetpackcameraapplication App Com</td><td>1</td><td><code>23</code></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Core Flow</h4>
+    <div class="arrow-chain">Graph Build -&gt; Extraction Pipeline -&gt; Ingestion &amp; Updates -&gt; CLI &amp; Skill Installers -&gt; Cacheparam App Androidtest -&gt; Mediastoreentryexistsaftertimestamp App Androidtest -&gt; Jetpackcameraapplication App Com</div>
+  </div>
+</div>
+<div class="grid">
+  <div class="card">
+    <h4>Graph Report Highlights</h4>
+    <ul>
+      <li>427 nodes · 1025 edges · 25 communities (20 shown, 5 thin omitted)</li>
+      <li>Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 52 edges (avg confidence: 0.84)</li>
+      <li>Token cost: 0 input · 0 output</li>
+      <li>1. `runMainActivityScenarioTest()` - 78 edges</li>
+      <li>2. `assume()` - 23 edges</li>
+      <li>3. `runMainActivityScenarioTestForResult()` - 23 edges</li>
+    </ul>
+  </div>
+</div>
+<hr>
+<!-- ====== 2. Extraction Pipeline ====== -->
+<h2 id="extract-pipeline">2. Extraction Pipeline</h2>
+<p>Extraction Pipeline groups implementation around androidtest, com, google, jetpackcamera, mostly in jetpackcamera/utils/UiTestUtil.kt, jetpackcamera/utils/MetaDataRetrieverExt.kt, google/jetpackcamera/SwitchCameraTest.kt. This section covers 57 nodes and 66 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Extraction Pipeline (57 nodes, 66 edges)
+    subgraph extract_pipeline_google_jetpackcamera_SwitchCame_7c2bf331["google/jetpackcamera/SwitchCameraTest.kt"]
+        src_androidtest_java_com_google_jetpackcamera_sw_cbde14a4("SwitchCameraTest<br/><small>google/jetpackcamera/SwitchCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_sw_c7127acf("SwitchCameraTest.kt")
+        src_androidtest_java_com_google_jetpackcamera_sw_d20477f5("canFlipCamera_fromQuickSettings()<br/><small>google/jetpackcamera/SwitchCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_sw_cb770d87("canFlipCamera_fromPreviewScreenButton()<br/><small>google/jetpackcamera/SwitchCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_sw_8ed6ac2d("canFlipCamera_fromPreviewScreenDoubleTap()<br/><small>google/jetpackcamera/SwitchCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_sw_47de9b8c("runFlipCameraTest()<br/><small>google/jetpackcamera/SwitchCameraTest.kt</small>")
+    end
+    subgraph extract_pipeline_jetpackcamera_utils_MetaDataRet_70b49692["jetpackcamera/utils/MetaDataRetrieverExt.kt"]
+        src_androidtest_java_com_google_jetpackcamera_ut_b5453fce("MetaDataRetrieverExt.kt")
+        src_androidtest_java_com_google_jetpackcamera_ut_8a3d3386("getAspectRatio()<br/><small>jetpackcamera/utils/MetaDataRetrieverExt.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_ut_d7d7ca85("getHeight()<br/><small>jetpackcamera/utils/MetaDataRetrieverExt.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_ut_8b9db2bb("getWidth()<br/><small>jetpackcamera/utils/MetaDataRetrieverExt.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_ut_afa55dd5("getResolution()<br/><small>jetpackcamera/utils/MetaDataRetrieverExt.kt</small>")
+    end
+    subgraph extract_pipeline_jetpackcamera_utils_UiTestUtil_90e06354["jetpackcamera/utils/UiTestUtil.kt"]
+        app_src_androidtest_java_com_google_jetpackcamer_9ad83d4c("runMainActivityScenarioTest<br/><small>jetpackcamera/utils/UiTestUtil.kt</small>")
+        app_src_androidtest_java_com_google_jetpackcamer_2fc55941("runMainActivityMediaStoreAutoDeleteScen...<br/><small>jetpackcamera/utils/UiTestUtil.kt</small>")
+        app_src_androidtest_java_com_google_jetpackcamer_ab54f68f("compatMainActivityExtras<br/><small>jetpackcamera/utils/UiTestUtil.kt</small>")
+        app_src_androidtest_java_com_google_jetpackcamer_e6aa2df6("isEmulatorWithFakeFrontCamera<br/><small>jetpackcamera/utils/UiTestUtil.kt</small>")
+    end
+    app_src_androidtest_java_com_google_jetpackcamer_5dc65b91("CaptureModeSettingsTest<br/><small>google/jetpackcamera/CaptureModeSettingsTest.kt</small>")
+    app_src_androidtest_java_com_google_jetpackcamer_9af18cec("FlashDeviceTest<br/><small>google/jetpackcamera/FlashDeviceTest.kt</small>")
+    app_src_androidtest_java_com_google_jetpackcamer_db3e7fde("VideoRecordingDeviceTest<br/><small>google/jetpackcamera/VideoRecordingDeviceTest.kt</small>")
+    src_androidtest_java_com_google_jetpackcamera_sw_cbde14a4 -->|method| src_androidtest_java_com_google_jetpackcamera_sw_d20477f5
+    src_androidtest_java_com_google_jetpackcamera_sw_cbde14a4 -->|method| src_androidtest_java_com_google_jetpackcamera_sw_cb770d87
+    src_androidtest_java_com_google_jetpackcamera_sw_cbde14a4 -->|method| src_androidtest_java_com_google_jetpackcamera_sw_8ed6ac2d
+    src_androidtest_java_com_google_jetpackcamera_ut_8a3d3386 -->|calls| src_androidtest_java_com_google_jetpackcamera_ut_d7d7ca85
+    src_androidtest_java_com_google_jetpackcamera_ut_8a3d3386 -->|calls| src_androidtest_java_com_google_jetpackcamera_ut_8b9db2bb
+    src_androidtest_java_com_google_jetpackcamera_ut_afa55dd5 -->|calls| src_androidtest_java_com_google_jetpackcamera_ut_d7d7ca85
+    src_androidtest_java_com_google_jetpackcamera_ut_afa55dd5 -->|calls| src_androidtest_java_com_google_jetpackcamera_ut_8b9db2bb
+    src_androidtest_java_com_google_jetpackcamera_sw_cb770d87 -->|calls| src_androidtest_java_com_google_jetpackcamera_sw_47de9b8c
+    src_androidtest_java_com_google_jetpackcamera_sw_8ed6ac2d -->|calls| src_androidtest_java_com_google_jetpackcamera_sw_47de9b8c
+    src_androidtest_java_com_google_jetpackcamera_sw_d20477f5 -->|calls| src_androidtest_java_com_google_jetpackcamera_sw_47de9b8c
+    app_src_androidtest_java_com_google_jetpackcamer_5dc65b91 -->|calls| app_src_androidtest_java_com_google_jetpackcamer_9ad83d4c
+    app_src_androidtest_java_com_google_jetpackcamer_9af18cec -->|calls| app_src_androidtest_java_com_google_jetpackcamer_2fc55941
+    app_src_androidtest_java_com_google_jetpackcamer_9af18cec -->|calls| app_src_androidtest_java_com_google_jetpackcamer_9ad83d4c
+    app_src_androidtest_java_com_google_jetpackcamer_ab54f68f -->|calls| app_src_androidtest_java_com_google_jetpackcamer_e6aa2df6
+    app_src_androidtest_java_com_google_jetpackcamer_2fc55941 -->|calls| app_src_androidtest_java_com_google_jetpackcamer_9ad83d4c
+    app_src_androidtest_java_com_google_jetpackcamer_db3e7fde -->|calls| app_src_androidtest_java_com_google_jetpackcamer_2fc55941
+    %% Omitted for readability: 39 nodes, 0 edges
+    class src_androidtest_java_com_google_jetpackcamera_sw_cbde14a4 test;
+    class src_androidtest_java_com_google_jetpackcamera_sw_c7127acf test;
+    class src_androidtest_java_com_google_jetpackcamera_sw_d20477f5 test;
+    class src_androidtest_java_com_google_jetpackcamera_sw_cb770d87 test;
+    class src_androidtest_java_com_google_jetpackcamera_sw_8ed6ac2d test;
+    class src_androidtest_java_com_google_jetpackcamera_sw_47de9b8c test;
+    class src_androidtest_java_com_google_jetpackcamera_ut_b5453fce test;
+    class src_androidtest_java_com_google_jetpackcamera_ut_8a3d3386 test;
+    class src_androidtest_java_com_google_jetpackcamera_ut_d7d7ca85 test;
+    class src_androidtest_java_com_google_jetpackcamera_ut_8b9db2bb test;
+    class src_androidtest_java_com_google_jetpackcamera_ut_afa55dd5 test;
+    class app_src_androidtest_java_com_google_jetpackcamer_9ad83d4c test;
+    class app_src_androidtest_java_com_google_jetpackcamer_2fc55941 test;
+    class app_src_androidtest_java_com_google_jetpackcamer_ab54f68f test;
+    class app_src_androidtest_java_com_google_jetpackcamer_e6aa2df6 test;
+    class app_src_androidtest_java_com_google_jetpackcamer_5dc65b91 test;
+    class app_src_androidtest_java_com_google_jetpackcamer_9af18cec test;
+    class app_src_androidtest_java_com_google_jetpackcamer_db3e7fde test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>BackgroundDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/BackgroundDeviceTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>CameraEffectDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/CameraEffectDeviceTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>CaptureModeSettingsTest</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>DebugOverlayTest</code><br><small style="color:var(--muted)">google/jetpackcamera/DebugOverlayTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>FlashDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/FlashDeviceTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>FocusMeteringTest</code><br><small style="color:var(--muted)">google/jetpackcamera/FocusMeteringTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>ImageCaptureDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ImageCaptureDeviceTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>NavigationTest</code><br><small style="color:var(--muted)">google/jetpackcamera/NavigationTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>PostCaptureTest</code><br><small style="color:var(--muted)">google/jetpackcamera/PostCaptureTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>SingleLensModeTest</code><br><small style="color:var(--muted)">google/jetpackcamera/SingleLensModeTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>SwitchCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/SwitchCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>CameraXResetRule</code><br><small style="color:var(--muted)">jetpackcamera/utils/AppTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>CameraXResetRule node in jetpackcamera/utils/AppTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>mediaStoreInsertedFlow</code><br><small style="color:var(--muted)">jetpackcamera/utils/AppTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>mediaStoreInsertedFlow node in jetpackcamera/utils/AppTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>MediaMetadataRetrieverExt</code><br><small style="color:var(--muted)">jetpackcamera/utils/MetaDataRetrieverExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>VideoAudioTest</code><br><small style="color:var(--muted)">google/jetpackcamera/VideoAudioTest.kt</small><br><code>VideoRecordingDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/VideoRecordingDeviceTest.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>Supports retrieval-augmented Q&amp;A or streaming chat.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>compatMainActivityExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>mergeWithCompatExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><code>isEmulatorWithFakeFrontCamera</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>compatMainActivityExtras node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>deleteFilesInDirAfterTimestamp</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>deleteFilesInDirAfterTimestamp node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>getMultipleImageCaptureIntent</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ExternalAutomationCompatibilityTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ExternalAutomationCompatibilityTest.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>getMultipleImageCaptureIntent node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>getSingleImageCaptureIntent</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ExternalAutomationCompatibilityTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ExternalAutomationCompatibilityTest.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>getSingleImageCaptureIntent node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>isEmulatorWithFakeFrontCamera</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>compatMainActivityExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>isEmulatorWithFakeFrontCamera node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>MainActivity (test target)</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>mergeWithCompatExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br><code>runMainActivityScenarioTestForResult</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><code>compatMainActivityExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>mergeWithCompatExtras node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>runMainActivityMediaStoreAutoDeleteScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>FlashDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/FlashDeviceTest.kt</small><br><code>ImageCaptureDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ImageCaptureDeviceTest.kt</small><br><code>PostCaptureTest</code><br><small style="color:var(--muted)">google/jetpackcamera/PostCaptureTest.kt</small><br>+2 more</td>
+  <td><code>mediaStoreInsertedFlow</code><br><small style="color:var(--muted)">jetpackcamera/utils/AppTestUtil.kt</small><br><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>BackgroundDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/BackgroundDeviceTest.kt</small><br><code>CameraEffectDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/CameraEffectDeviceTest.kt</small><br><code>CaptureModeSettingsTest</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br>+8 more</td>
+  <td><code>mergeWithCompatExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br><code>runScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>runMainActivityScenarioTestForResult</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ExternalAutomationCompatibilityTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ExternalAutomationCompatibilityTest.kt</small><br><code>VideoRecordingDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/VideoRecordingDeviceTest.kt</small></td>
+  <td><code>mergeWithCompatExtras</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>runScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>runMainActivityScenarioTest</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>VideoAudioTest</code><br><small style="color:var(--muted)">google/jetpackcamera/VideoAudioTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>MediaMetadataRetrieverExt</code><br><small style="color:var(--muted)">jetpackcamera/utils/MetaDataRetrieverExt.kt</small><br><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>VideoRecordingDeviceTest</code><br><small style="color:var(--muted)">google/jetpackcamera/VideoRecordingDeviceTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>MediaMetadataRetrieverExt</code><br><small style="color:var(--muted)">jetpackcamera/utils/MetaDataRetrieverExt.kt</small><br><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br><code>runMainActivityScenarioTestForResult</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>ExternalAutomationCompatibilityTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ExternalAutomationCompatibilityTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>getMultipleImageCaptureIntent</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br><code>getSingleImageCaptureIntent</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br><code>runMainActivityScenarioTestForResult</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>getAspectRatio()</code><br><small style="color:var(--muted)">jetpackcamera/utils/MetaDataRetrieverExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>getHeight()</code><br><small style="color:var(--muted)">jetpackcamera/utils/MetaDataRetrieverExt.kt</small><br><code>getWidth()</code><br><small style="color:var(--muted)">jetpackcamera/utils/MetaDataRetrieverExt.kt</small></td>
+  <td>getAspectRatio() node in jetpackcamera/utils/MetaDataRetrieverExt.kt.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>jetpackcamera/utils/UiTestUtil.kt</code></td><td>14 nodes</td></tr>
+<tr><td><code>jetpackcamera/utils/MetaDataRetrieverExt.kt</code></td><td>10 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/SwitchCameraTest.kt</code></td><td>6 nodes</td></tr>
+<tr><td><code>jetpackcamera/utils/AppTestUtil.kt</code></td><td>4 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/BackgroundDeviceTest.kt</code></td><td>1 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/CameraEffectDeviceTest.kt</code></td><td>1 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/CaptureModeSettingsTest.kt</code></td><td>1 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/ConcurrentCameraTest.kt</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x30, contains x11, references x6, imports x4. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 3. Graph Build ====== -->
+<h2 id="build-graph">3. Graph Build</h2>
+<p>Graph Build groups implementation around buildgradlekts, mostly in build.gradle.kts. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Graph Build (1 nodes, 0 edges)
+    build_gradle_877734b9("build.gradle.kts")
+    class build_gradle_877734b9 function;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>build.gradle.kts</code><br><small style="color:var(--muted)">build.gradle.kts</small></td>
+  <td><span class="tag tag-func">Function</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>build.gradle.kts node in build.gradle.kts.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>build.gradle.kts</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 4. CLI & Skill Installers ====== -->
+<h2 id="cli-skills">4. CLI &amp; Skill Installers</h2>
+<p>CLI &amp; Skill Installers groups implementation around launcher, app, icon, res, mostly in src/main/ic_launcher-playstore.png, res/mipmap-xxxhdpi/ic_launcher_round.webp, res/mipmap-xxxhdpi/ic_launcher.webp. This section covers 14 nodes and 19 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: CLI &amp; Skill Installers (14 nodes, 19 edges)
+    subgraph cli_skills_res_mipmap_xxxhdpi_ic_launcher_webp_f4317314["res/mipmap-xxxhdpi/ic_launcher.webp"]
+        app_src_main_res_mipmap_xxxhdpi_ic_launcher_xxxh_12ee1e94("Launcher Icon xxxhdpi Square<br/><small>res/mipmap-xxxhdpi/ic_launcher.webp</small>")
+        app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4("Square (Adaptive) Launcher Icon Variant<br/><small>res/mipmap-xxxhdpi/ic_launcher.webp</small>")
+    end
+    subgraph cli_skills_res_mipmap_xxxhdpi_ic_launcher_round_ce4fc9d6["res/mipmap-xxxhdpi/ic_launcher_round.webp"]
+        app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87("Round Launcher Icon Variant<br/><small>res/mipmap-xxxhdpi/ic_launcher_round.webp</small>")
+        ic_launcher_xxxhdpi_round_dec7732d("Launcher Icon xxxhdpi Round<br/><small>res/mipmap-xxxhdpi/ic_launcher_round.webp</small>")
+    end
+    subgraph cli_skills_src_main_ic_launcher_playstore_png_5fedc708["src/main/ic_launcher-playstore.png"]
+        app_src_main_ic_launcher_playstore_2378c60c("Play Store Launcher Icon (1024px PNG)<br/><small>src/main/ic_launcher-playstore.png</small>")
+        ic_launcher_concept_eab18ce9("Jetpack Camera App Icon Concept<br/><small>src/main/ic_launcher-playstore.png</small>")
+    end
+    app_src_main_res_mipmap_hdpi_ic_launcher_hdpi_sq_5f17abc1("Launcher Icon hdpi Square<br/><small>res/mipmap-hdpi/ic_launcher.webp</small>")
+    ic_launcher_hdpi_round_39e3937b("Launcher Icon hdpi Round<br/><small>res/mipmap-hdpi/ic_launcher_round.webp</small>")
+    app_src_main_res_mipmap_mdpi_ic_launcher_mdpi_sq_cc7f8c0c("Launcher Icon mdpi Square<br/><small>res/mipmap-mdpi/ic_launcher.webp</small>")
+    ic_launcher_mdpi_round_40a5434a("Launcher Icon mdpi Round<br/><small>res/mipmap-mdpi/ic_launcher_round.webp</small>")
+    app_src_main_res_mipmap_xhdpi_ic_launcher_xhdpi_ba592ebd("Launcher Icon xhdpi Square<br/><small>res/mipmap-xhdpi/ic_launcher.webp</small>")
+    ic_launcher_xhdpi_round_68c5413d("Launcher Icon xhdpi Round<br/><small>res/mipmap-xhdpi/ic_launcher_round.webp</small>")
+    app_src_main_res_mipmap_xxhdpi_ic_launcher_xxhdp_6184c2f1("Launcher Icon xxhdpi Square<br/><small>res/mipmap-xxhdpi/ic_launcher.webp</small>")
+    ic_launcher_xxhdpi_round_db517b49("Launcher Icon xxhdpi Round<br/><small>res/mipmap-xxhdpi/ic_launcher_round.webp</small>")
+    app_src_main_ic_launcher_playstore_2378c60c -->|implements| ic_launcher_concept_eab18ce9
+    app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87 -->|implements| ic_launcher_concept_eab18ce9
+    app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4 -->|implements| ic_launcher_concept_eab18ce9
+    app_src_main_res_mipmap_hdpi_ic_launcher_hdpi_sq_5f17abc1 -->|relates| ic_launcher_hdpi_round_39e3937b
+    app_src_main_res_mipmap_hdpi_ic_launcher_hdpi_sq_5f17abc1 -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4
+    app_src_main_res_mipmap_mdpi_ic_launcher_mdpi_sq_cc7f8c0c -->|relates| ic_launcher_mdpi_round_40a5434a
+    app_src_main_res_mipmap_mdpi_ic_launcher_mdpi_sq_cc7f8c0c -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4
+    app_src_main_res_mipmap_xhdpi_ic_launcher_xhdpi_ba592ebd -->|relates| ic_launcher_xhdpi_round_68c5413d
+    app_src_main_res_mipmap_xhdpi_ic_launcher_xhdpi_ba592ebd -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4
+    app_src_main_res_mipmap_xxhdpi_ic_launcher_xxhdp_6184c2f1 -->|relates| ic_launcher_xxhdpi_round_db517b49
+    app_src_main_res_mipmap_xxhdpi_ic_launcher_xxhdp_6184c2f1 -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4
+    app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4 -->|relates| app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87
+    app_src_main_res_mipmap_xxxhdpi_ic_launcher_xxxh_12ee1e94 -->|relates| ic_launcher_xxxhdpi_round_dec7732d
+    app_src_main_res_mipmap_xxxhdpi_ic_launcher_xxxh_12ee1e94 -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4
+    ic_launcher_hdpi_round_39e3937b -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87
+    ic_launcher_mdpi_round_40a5434a -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87
+    ic_launcher_xhdpi_round_68c5413d -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87
+    ic_launcher_xxhdpi_round_db517b49 -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87
+    ic_launcher_xxxhdpi_round_dec7732d -->|implements| app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87
+    class app_src_main_res_mipmap_xxxhdpi_ic_launcher_xxxh_12ee1e94 klass;
+    class app_src_main_res_mipmap_xxxhdpi_ic_launcher_squa_a31979b4 klass;
+    class app_src_main_res_mipmap_xxxhdpi_ic_launcher_roun_4a2f3d87 klass;
+    class ic_launcher_xxxhdpi_round_dec7732d klass;
+    class app_src_main_ic_launcher_playstore_2378c60c ui;
+    class ic_launcher_concept_eab18ce9 klass;
+    class app_src_main_res_mipmap_hdpi_ic_launcher_hdpi_sq_5f17abc1 klass;
+    class ic_launcher_hdpi_round_39e3937b klass;
+    class app_src_main_res_mipmap_mdpi_ic_launcher_mdpi_sq_cc7f8c0c klass;
+    class ic_launcher_mdpi_round_40a5434a klass;
+    class app_src_main_res_mipmap_xhdpi_ic_launcher_xhdpi_ba592ebd klass;
+    class ic_launcher_xhdpi_round_68c5413d klass;
+    class app_src_main_res_mipmap_xxhdpi_ic_launcher_xxhdp_6184c2f1 klass;
+    class ic_launcher_xxhdpi_round_db517b49 klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>Play Store Launcher Icon (1024px PNG)</code><br><small style="color:var(--muted)">src/main/ic_launcher-playstore.png</small></td>
+  <td><span class="tag tag-hook">UI</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Play Store Launcher Icon (1024px PNG) node in src/main/ic_launcher-playstore.png.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>Launcher Icon hdpi Square</code><br><small style="color:var(--muted)">res/mipmap-hdpi/ic_launcher.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon hdpi Square node in res/mipmap-hdpi/ic_launcher.webp.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>Launcher Icon mdpi Square</code><br><small style="color:var(--muted)">res/mipmap-mdpi/ic_launcher.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon mdpi Square node in res/mipmap-mdpi/ic_launcher.webp.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>Launcher Icon xhdpi Square</code><br><small style="color:var(--muted)">res/mipmap-xhdpi/ic_launcher.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon xhdpi Square node in res/mipmap-xhdpi/ic_launcher.webp.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>Launcher Icon xxhdpi Square</code><br><small style="color:var(--muted)">res/mipmap-xxhdpi/ic_launcher.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon xxhdpi Square node in res/mipmap-xxhdpi/ic_launcher.webp.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>Round Launcher Icon Variant</code><br><small style="color:var(--muted)">res/mipmap-xxxhdpi/ic_launcher_round.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Round Launcher Icon Variant node in res/mipmap-xxxhdpi/ic_launcher_round.webp.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>Square (Adaptive) Launcher Icon Variant</code><br><small style="color:var(--muted)">res/mipmap-xxxhdpi/ic_launcher.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Square (Adaptive) Launcher Icon Variant node in res/mipmap-xxxhdpi/ic_launcher.webp.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>Launcher Icon xxxhdpi Square</code><br><small style="color:var(--muted)">res/mipmap-xxxhdpi/ic_launcher.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon xxxhdpi Square node in res/mipmap-xxxhdpi/ic_launcher.webp.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>Jetpack Camera App Icon Concept</code><br><small style="color:var(--muted)">src/main/ic_launcher-playstore.png</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Jetpack Camera App Icon Concept node in src/main/ic_launcher-playstore.png.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>Launcher Icon hdpi Round</code><br><small style="color:var(--muted)">res/mipmap-hdpi/ic_launcher_round.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon hdpi Round node in res/mipmap-hdpi/ic_launcher_round.webp.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>Launcher Icon mdpi Round</code><br><small style="color:var(--muted)">res/mipmap-mdpi/ic_launcher_round.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon mdpi Round node in res/mipmap-mdpi/ic_launcher_round.webp.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>Launcher Icon xhdpi Round</code><br><small style="color:var(--muted)">res/mipmap-xhdpi/ic_launcher_round.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon xhdpi Round node in res/mipmap-xhdpi/ic_launcher_round.webp.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>Launcher Icon xxhdpi Round</code><br><small style="color:var(--muted)">res/mipmap-xxhdpi/ic_launcher_round.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon xxhdpi Round node in res/mipmap-xxhdpi/ic_launcher_round.webp.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>Launcher Icon xxxhdpi Round</code><br><small style="color:var(--muted)">res/mipmap-xxxhdpi/ic_launcher_round.webp</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Launcher Icon xxxhdpi Round node in res/mipmap-xxxhdpi/ic_launcher_round.webp.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>src/main/ic_launcher-playstore.png</code></td><td>2 nodes</td></tr>
+<tr><td><code>res/mipmap-xxxhdpi/ic_launcher.webp</code></td><td>2 nodes</td></tr>
+<tr><td><code>res/mipmap-xxxhdpi/ic_launcher_round.webp</code></td><td>2 nodes</td></tr>
+<tr><td><code>res/mipmap-hdpi/ic_launcher.webp</code></td><td>1 nodes</td></tr>
+<tr><td><code>res/mipmap-hdpi/ic_launcher_round.webp</code></td><td>1 nodes</td></tr>
+<tr><td><code>res/mipmap-mdpi/ic_launcher.webp</code></td><td>1 nodes</td></tr>
+<tr><td><code>res/mipmap-mdpi/ic_launcher_round.webp</code></td><td>1 nodes</td></tr>
+<tr><td><code>res/mipmap-xhdpi/ic_launcher.webp</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: implements x13, relates x6. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 5. Ingestion & Updates ====== -->
+<h2 id="ingest-cache-update">5. Ingestion &amp; Updates</h2>
+<p>Ingestion &amp; Updates groups implementation around com, google, jetpackcamera, androidtest, mostly in jetpackcamera/utils/ComposeTestRuleExt.kt, jetpackcamera/utils/UiTestUtil.kt, google/jetpackcamera/CaptureModeSettingsTest.kt. This section covers 352 nodes and 933 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Ingestion &amp; Updates (352 nodes, 933 edges)
+    subgraph ingest_cache_update_google_jetpackcamera_Concurr_671722c3["google/jetpackcamera/ConcurrentCameraTest.kt"]
+        src_androidtest_java_com_google_jetpackcamera_co_df3af80b("ConcurrentCameraTest.kt")
+        src_androidtest_java_com_google_jetpackcamera_co_4557abda("ConcurrentCameraTest<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_e056069e("concurrentCameraMode_whenEnabled_canFlipCamera()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_27fec6bb("concurrentCameraMode_whenEnabled_canSwitchAspectRatio()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_e78b73ad("concurrentCameraMode_whenEnabled_disablesOtherQuickSettings()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_bd033191("concurrentCameraMode_whenEnabled_disablesOtherSettingsInSettingsScreen()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_0f8e8887("concurrentCameraMode_canRecordVideo()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08("runConcurrentCameraScenarioTest()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_a3b8bb33("concurrentCameraMode_canBeEnabled()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_co_a119ffbb("concurrentCameraMode_whenEnabled_canBeDisabled()<br/><small>google/jetpackcamera/ConcurrentCameraTest.kt</small>")
+    end
+    subgraph ingest_cache_update_google_jetpackcamera_Capture_5cedc97c["google/jetpackcamera/CaptureModeSettingsTest.kt"]
+        src_androidtest_java_com_google_jetpackcamera_ca_5bb9f0da("CaptureModeSettingsTest.kt")
+        src_androidtest_java_com_google_jetpackcamera_ca_2cbe7773("CaptureModeSettingsTest<br/><small>google/jetpackcamera/CaptureModeSettingsTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_ca_c61a504f("flip()<br/><small>google/jetpackcamera/CaptureModeSettingsTest.kt</small>")
+    end
+    subgraph ingest_cache_update_google_jetpackcamera_FocusMe_d81b1e25["google/jetpackcamera/FocusMeteringTest.kt"]
+        src_androidtest_java_com_google_jetpackcamera_fo_76a464d5("FocusMeteringTest<br/><small>google/jetpackcamera/FocusMeteringTest.kt</small>")
+        src_androidtest_java_com_google_jetpackcamera_fo_b995bf32("testFocusMeteringIndicator_appearsInCorrectQuadrant()<br/><small>google/jetpackcamera/FocusMeteringTest.kt</small>")
+    end
+    src_androidtest_java_com_google_jetpackcamera_im_49c13a8a("ImageCaptureDeviceTest.kt")
+    src_androidtest_java_com_google_jetpackcamera_pe_1cc352b7("PermissionsTest.kt")
+    src_androidtest_java_com_google_jetpackcamera_vi_e4013d24("VideoRecordingDeviceTest.kt")
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_e056069e
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_27fec6bb
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_e78b73ad
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_bd033191
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_0f8e8887
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_a3b8bb33
+    src_androidtest_java_com_google_jetpackcamera_co_4557abda -->|method| src_androidtest_java_com_google_jetpackcamera_co_a119ffbb
+    src_androidtest_java_com_google_jetpackcamera_fo_76a464d5 -->|method| src_androidtest_java_com_google_jetpackcamera_fo_b995bf32
+    src_androidtest_java_com_google_jetpackcamera_ca_2cbe7773 -->|method| src_androidtest_java_com_google_jetpackcamera_ca_c61a504f
+    src_androidtest_java_com_google_jetpackcamera_co_a3b8bb33 -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_0f8e8887 -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_a119ffbb -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_e056069e -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_27fec6bb -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_e78b73ad -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    src_androidtest_java_com_google_jetpackcamera_co_bd033191 -->|calls| src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08
+    %% Omitted for readability: 334 nodes, 0 edges
+    class src_androidtest_java_com_google_jetpackcamera_co_df3af80b test;
+    class src_androidtest_java_com_google_jetpackcamera_co_4557abda test;
+    class src_androidtest_java_com_google_jetpackcamera_co_e056069e test;
+    class src_androidtest_java_com_google_jetpackcamera_co_27fec6bb test;
+    class src_androidtest_java_com_google_jetpackcamera_co_e78b73ad test;
+    class src_androidtest_java_com_google_jetpackcamera_co_bd033191 test;
+    class src_androidtest_java_com_google_jetpackcamera_co_0f8e8887 test;
+    class src_androidtest_java_com_google_jetpackcamera_co_7ac6ca08 test;
+    class src_androidtest_java_com_google_jetpackcamera_co_a3b8bb33 test;
+    class src_androidtest_java_com_google_jetpackcamera_co_a119ffbb test;
+    class src_androidtest_java_com_google_jetpackcamera_ca_5bb9f0da test;
+    class src_androidtest_java_com_google_jetpackcamera_ca_2cbe7773 test;
+    class src_androidtest_java_com_google_jetpackcamera_ca_c61a504f test;
+    class src_androidtest_java_com_google_jetpackcamera_fo_76a464d5 test;
+    class src_androidtest_java_com_google_jetpackcamera_fo_b995bf32 test;
+    class src_androidtest_java_com_google_jetpackcamera_im_49c13a8a test;
+    class src_androidtest_java_com_google_jetpackcamera_pe_1cc352b7 test;
+    class src_androidtest_java_com_google_jetpackcamera_vi_e4013d24 test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>concurrentCameraMode_canBeEnabled()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>concurrentCameraMode_canRecordVideo()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>concurrentCameraMode_whenEnabled_canBeDisabled()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br>+5 more</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>FocusMeteringTest</code><br><small style="color:var(--muted)">google/jetpackcamera/FocusMeteringTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td><code>testFocusMeteringIndicator_appearsInCorrectQuadrant()</code><br><small style="color:var(--muted)">google/jetpackcamera/FocusMeteringTest.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>SettingsScreenScope</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SettingsScreenScope node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td><code>SettingsScreenScope</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>SettingsScreenScope node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>.hdr_supports_image_and_video()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>CaptureModeSettingsTest</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small></td>
+  <td><code>assume()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>checkCaptureModeSettingState()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br><code>getCaptureModeToggleState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br>+7 more</td>
+  <td>.hdr_supports_image_and_video() node in google/jetpackcamera/CaptureModeSettingsTest.kt.</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>.concurrentCameraMode_canBeEnabled()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>setConcurrentCameraModeInSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>visitSettingsScreen()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>.concurrentCameraMode_canBeEnabled() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>.concurrentCameraMode_canRecordVideo()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>longClickForVideoRecordingCheckingElaps...</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>setConcurrentCameraModeInSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br>+1 more</td>
+  <td>.concurrentCameraMode_canRecordVideo() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>.concurrentCameraMode_whenEnabled_canBeDisabled()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>setConcurrentCameraModeInSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>visitSettingsScreen()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>.concurrentCameraMode_whenEnabled_canBeDisabled() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>9</td>
+  <td><code>.concurrentCameraMode_whenEnabled_canFlipCamera()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>setConcurrentCameraModeInSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>.concurrentCameraMode_whenEnabled_canFlipCamera() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>10</td>
+  <td><code>.concurrentCameraMode_whenEnabled_canSwitchAspectRatio()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>setConcurrentCameraModeInSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>.concurrentCameraMode_whenEnabled_canSwitchAspectRatio() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>11</td>
+  <td><code>.concurrentCameraMode_whenEnabled_disablesOtherQuickSettings()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>searchForQuickSetting()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br>+3 more</td>
+  <td>.concurrentCameraMode_whenEnabled_disablesOtherQuickSettings() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>12</td>
+  <td><code>.concurrentCameraMode_whenEnabled_disablesOtherSettingsInSettingsScreen()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ConcurrentCameraTest</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><code>runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>setConcurrentCameraModeInSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>visitSettingsScreen()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>.concurrentCameraMode_whenEnabled_disablesOtherSettingsInSettingsScreen() node in google/jetpackcamera/ConcurrentCameraTest.kt.</td>
+</tr>
+<tr>
+  <td>13</td>
+  <td><code>.runConcurrentCameraScenarioTest()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>concurrentCameraMode_canBeEnabled()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>concurrentCameraMode_canRecordVideo()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>concurrentCameraMode_whenEnabled_canBeDisabled()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br>+5 more</td>
+  <td><code>assume()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>runMainActivityMediaStoreAutoDeleteScen...</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small><br>+1 more</td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>14</td>
+  <td><code>.testFocusMeteringIndicator_appearsInCorrectQuadrant()</code><br><small style="color:var(--muted)">google/jetpackcamera/FocusMeteringTest.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>FocusMeteringTest</code><br><small style="color:var(--muted)">google/jetpackcamera/FocusMeteringTest.kt</small></td>
+  <td><code>runMainActivityScenarioTest()</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td>Verifies imports, entry points, or version behavior.</td>
+</tr>
+<tr>
+  <td>15</td>
+  <td><code>assume()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>assumeHalStableOnImageCapture()</code><br><small style="color:var(--muted)">google/jetpackcamera/FlashDeviceTest.kt</small><br><code>assumeHalStableOnSelectAspectRatio()</code><br><small style="color:var(--muted)">google/jetpackcamera/SettingsDeviceTest.kt</small><br><code>assumeSupportsSingleStream()</code><br><small style="color:var(--muted)">google/jetpackcamera/CameraEffectDeviceTest.kt</small><br>+16 more</td>
+  <td><code>buildGeneralErrorMessage()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>assume() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>16</td>
+  <td><code>buildGeneralErrorMessage()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>assume()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>buildGeneralErrorMessage() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>17</td>
+  <td><code>checkComponentContentDescriptionState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>isHdrEnabled()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><code>assume()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>waitForNodeWithTag()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>checkComponentContentDescriptionState() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>18</td>
+  <td><code>checkComponentStateDescriptionState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>getCaptureModeToggleState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>isCaptureModeToggleEnabled()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><code>waitForNodeWithTag()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>checkComponentStateDescriptionState() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>19</td>
+  <td><code>getCaptureModeToggleState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>CaptureModeSettingsTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br><code>hdr_supports_image_and_video()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br><code>hdr_toggle_maintains_image_only_capture_mode()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br>+2 more</td>
+  <td><code>checkComponentStateDescriptionState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>getCaptureModeToggleState() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td><code>getCurrentCaptureMode()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>CaptureModeSettingsTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br><code>checkCaptureModeSettingState()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br><code>initializeCaptureSwitch()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br>+2 more</td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>visitQuickSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>getCurrentCaptureMode() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>21</td>
+  <td><code>getCurrentFlashMode()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>setFlashMode()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>visitQuickSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>getCurrentFlashMode() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>22</td>
+  <td><code>getCurrentLensFacing()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>FlashDeviceTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/FlashDeviceTest.kt</small><br><code>SwitchCameraTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/SwitchCameraTest.kt</small></td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>visitQuickSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>getCurrentLensFacing() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>23</td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>concurrentCameraMode_whenEnabled_disablesOtherQuickSettings()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>ConcurrentCameraTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>ensureTextNotAppears()</code><br><small style="color:var(--muted)">google/jetpackcamera/ImageCaptureDeviceTest.kt</small><br>+11 more</td>
+  <td>No direct outbound edge</td>
+  <td>getResString() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>24</td>
+  <td><code>isCaptureModeToggleEnabled()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>CaptureModeSettingsTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small><br><code>hdr_supports_image_and_video()</code><br><small style="color:var(--muted)">google/jetpackcamera/CaptureModeSettingsTest.kt</small></td>
+  <td><code>checkComponentStateDescriptionState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>isCaptureModeToggleEnabled() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>25</td>
+  <td><code>isHdrEnabled()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>setHdrEnabled()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><code>checkComponentContentDescriptionState()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small><br><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>isHdrEnabled() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>26</td>
+  <td><code>longClickForVideoRecording()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ImageCaptureDeviceTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/ImageCaptureDeviceTest.kt</small><br><code>VideoRecordingDeviceTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/VideoRecordingDeviceTest.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>longClickForVideoRecording() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>27</td>
+  <td><code>longClickForVideoRecordingCheckingElapsedTime()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>concurrentCameraMode_canRecordVideo()</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>ConcurrentCameraTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/ConcurrentCameraTest.kt</small><br><code>FlashDeviceTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/FlashDeviceTest.kt</small><br>+2 more</td>
+  <td><code>waitUntilVideoRecordingDurationAtLeast()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>longClickForVideoRecordingCheckingElapsedTime() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>28</td>
+  <td><code>onNodeWithContentDescription()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>visitQuickSettings()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>onNodeWithContentDescription() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>29</td>
+  <td><code>onNodeWithText()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>ImageCaptureDeviceTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/ImageCaptureDeviceTest.kt</small><br><code>NavigationTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/NavigationTest.kt</small><br><code>PermissionsTest.kt</code><br><small style="color:var(--muted)">google/jetpackcamera/PermissionsTest.kt</small><br>+1 more</td>
+  <td><code>getResString()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>onNodeWithText() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td><code>parseMinSecToMillis()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td><code>waitUntilVideoRecordingDurationAtLeast()</code><br><small style="color:var(--muted)">jetpackcamera/utils/ComposeTestRuleExt.kt</small></td>
+  <td>No direct outbound edge</td>
+  <td>parseMinSecToMillis() node in jetpackcamera/utils/ComposeTestRuleExt.kt.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>jetpackcamera/utils/ComposeTestRuleExt.kt</code></td><td>41 nodes</td></tr>
+<tr><td><code>jetpackcamera/utils/UiTestUtil.kt</code></td><td>28 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/CaptureModeSettingsTest.kt</code></td><td>20 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/ImageCaptureDeviceTest.kt</code></td><td>16 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/PostCaptureTest.kt</code></td><td>15 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/SettingsDeviceTest.kt</code></td><td>14 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/FlashDeviceTest.kt</code></td><td>13 nodes</td></tr>
+<tr><td><code>google/jetpackcamera/ConcurrentCameraTest.kt</code></td><td>10 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: calls x326, imports x229, method x133, references x114. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 6. Cacheparam App Androidtest ====== -->
+<h2 id="cacheparam-app-androidtest">6. Cacheparam App Androidtest</h2>
+<p>Cacheparam App Androidtest groups implementation around cacheparam, app, androidtest, com, mostly in jetpackcamera/utils/UiTestUtil.kt. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Cacheparam App Androidtest (1 nodes, 0 edges)
+    app_src_androidtest_java_com_google_jetpackcamer_f7e196b9("CacheParam<br/><small>jetpackcamera/utils/UiTestUtil.kt</small>")
+    class app_src_androidtest_java_com_google_jetpackcamer_f7e196b9 test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>CacheParam</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>Caches analysis results or computes cache keys.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>jetpackcamera/utils/UiTestUtil.kt</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 7. Mediastoreentryexistsaftertimestamp App Androidtest ====== -->
+<h2 id="mediastoreentryexistsaftertimestamp-app-androidt">7. Mediastoreentryexistsaftertimestamp App Androidtest</h2>
+<p>Mediastoreentryexistsaftertimestamp App Androidtest groups implementation around mediastoreentryexistsaftertimestamp, app, androidtest, com, mostly in jetpackcamera/utils/UiTestUtil.kt. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Mediastoreentryexistsaftertimestamp App Androidtest (1 nodes, 0 edges)
+    app_src_androidtest_java_com_google_jetpackcamer_7dd3b628("mediaStoreEntryExistsAfterTimestamp<br/><small>jetpackcamera/utils/UiTestUtil.kt</small>")
+    class app_src_androidtest_java_com_google_jetpackcamer_7dd3b628 test;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>mediaStoreEntryExistsAfterTimestamp</code><br><small style="color:var(--muted)">jetpackcamera/utils/UiTestUtil.kt</small></td>
+  <td><span class="tag tag-func">Test</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>mediaStoreEntryExistsAfterTimestamp node in jetpackcamera/utils/UiTestUtil.kt.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>jetpackcamera/utils/UiTestUtil.kt</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<!-- ====== 8. Jetpackcameraapplication App Com ====== -->
+<h2 id="jetpackcameraapplication-app-com">8. Jetpackcameraapplication App Com</h2>
+<p>Jetpackcameraapplication App Com groups implementation around jetpackcameraapplication, app, com, google, mostly in google/jetpackcamera/JetpackCameraApplication.kt. This section covers 1 nodes and 0 internal edges; the diagram shows only representative relationships to stay readable.</p>
+
+<div class="mermaid">
+%%{init: {"theme": "dark", "themeVariables": {"fontSize": "15.0px", "fontFamily": "Segoe UI, system-ui, sans-serif", "primaryColor": "#1e293b", "primaryTextColor": "#e2e8f0", "primaryBorderColor": "#38bdf8", "secondaryColor": "#0f172a", "tertiaryColor": "#334155", "lineColor": "#64748b", "textColor": "#e2e8f0"}, "flowchart": {"htmlLabels": true, "curve": "basis", "nodeSpacing": 48, "rankSpacing": 64, "padding": 14, "diagramPadding": 10, "useMaxWidth": true}}}%%
+flowchart LR
+    %% Section: Jetpackcameraapplication App Com (1 nodes, 0 edges)
+    app_src_main_java_com_google_jetpackcamera_jetpa_4038f952("JetpackCameraApplication<br/><small>google/jetpackcamera/JetpackCameraApplication.kt</small>")
+    class app_src_main_java_com_google_jetpackcamera_jetpa_4038f952 klass;
+    classDef entry fill:#422006,stroke:#fbbf24,color:#fde68a,stroke-width:1px;
+    classDef api fill:#450a0a,stroke:#f87171,color:#fee2e2,stroke-width:1px;
+    classDef async fill:#2e1065,stroke:#a78bfa,color:#ede9fe,stroke-width:1px;
+    classDef klass fill:#064e3b,stroke:#34d399,color:#d1fae5,stroke-width:1px;
+    classDef ui fill:#831843,stroke:#f472b6,color:#fce7f3,stroke-width:1px;
+    classDef module fill:#172554,stroke:#60a5fa,color:#dbeafe,stroke-width:1px;
+    classDef test fill:#3f3f46,stroke:#a1a1aa,color:#f4f4f5,stroke-width:1px;
+    classDef concept fill:#292524,stroke:#a8a29e,color:#fafaf9,stroke-dasharray:4 3;
+    classDef function fill:#0f172a,stroke:#38bdf8,color:#e0f2fe,stroke-width:1px;
+</div>
+
+<h3>Call Details</h3>
+<table class="call-table">
+<tr>
+  <th style="width:5%">#</th>
+  <th style="width:28%">Node</th>
+  <th style="width:10%">Type</th>
+  <th style="width:17%">Caller</th>
+  <th style="width:20%">Callees</th>
+  <th style="width:20%">Description</th>
+</tr>
+<tr>
+  <td>1</td>
+  <td><code>JetpackCameraApplication</code><br><small style="color:var(--muted)">google/jetpackcamera/JetpackCameraApplication.kt</small></td>
+  <td><span class="tag tag-class">Class</span></td>
+  <td>External entry / no inbound edge</td>
+  <td>No direct outbound edge</td>
+  <td>JetpackCameraApplication node in google/jetpackcamera/JetpackCameraApplication.kt.</td>
+</tr>
+</table>
+
+<div class="grid">
+  <div class="card">
+    <h4>Key Files</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><th>File</th><th>Coverage</th></tr>
+      <tr><td><code>google/jetpackcamera/JetpackCameraApplication.kt</code></td><td>1 nodes</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Design Notes</h4>
+    <p>This section comes from graphify community clustering. Relationship summary: No high-confidence call edges detected. The diagram prioritizes high-confidence calls or usage relationships; the table keeps the broader node inventory.</p>
+  </div>
+</div>
+<hr>
+
+<h2 id="hyperedges">Group Relationships (Hyperedges)</h2>
+<div class="grid">
+
+  <div class="card">
+    <h4>Hilt DI App-Level Module Configuration</h4>
+    <p><code>implement</code> — 3 participants</p>
+    <ul>
+      <li><code>app_src_main_java_com_google_jetpackcamera_appmodule_appmodule</code></li>
+      <li><code>app_src_main_java_com_google_jetpackcamera_appsettingsmodule_appsettingsmodule</code></li>
+      <li><code>app_src_main_java_com_google_jetpackcamera_jetpackcameraapplication_jetpackcameraapplication</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>App Startup Flow</h4>
+    <p><code>participate_in</code> — 3 participants</p>
+    <ul>
+      <li><code>app_src_main_java_com_google_jetpackcamera_mainactivity_mainactivity</code></li>
+      <li><code>app_src_main_java_com_google_jetpackcamera_mainactivityviewmodel_mainactivityviewmodel</code></li>
+      <li><code>app_src_main_java_com_google_jetpackcamera_ui_jcaapp_jcaapp</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Material3 Theme System</h4>
+    <p><code>form</code> — 3 participants</p>
+    <ul>
+      <li><code>app_src_main_java_com_google_jetpackcamera_ui_theme_color_colorpalette</code></li>
+      <li><code>app_src_main_java_com_google_jetpackcamera_ui_theme_theme_jetpackcameratheme</code></li>
+      <li><code>app_src_main_java_com_google_jetpackcamera_ui_theme_type_apptypography</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Test Media File Lifecycle (observe, capture, verify, delete)</h4>
+    <p><code>participate_in</code> — 4 participants</p>
+    <ul>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_apptestutil_mediastoreinsertedflow</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_runmainactivitymediastoreautodeletescenariotest</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_deletefilesindiraftertimestamp</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_mediastoreentryexistsaftertimestamp</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Permission Handling Utilities for Tests</h4>
+    <p><code>form</code> — 4 participants</p>
+    <ul>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_apptestutil_app_required_permissions</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_apptestutil_test_required_permissions</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_individualtestgrantpermissionrule</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_uideviceextensions</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Adaptive Icon Square and Round Concept Pair</h4>
+    <p><code>form</code> — 2 participants</p>
+    <ul>
+      <li><code>app_src_main_res_mipmap_xxxhdpi_ic_launcher_square_concept</code></li>
+      <li><code>app_src_main_res_mipmap_xxxhdpi_ic_launcher_round_concept</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>All Round Launcher Icon Density Variants</h4>
+    <p><code>implement</code> — 5 participants</p>
+    <ul>
+      <li><code>ic_launcher_hdpi_round</code></li>
+      <li><code>ic_launcher_mdpi_round</code></li>
+      <li><code>ic_launcher_xhdpi_round</code></li>
+      <li><code>ic_launcher_xxhdpi_round</code></li>
+      <li><code>ic_launcher_xxxhdpi_round</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>All Square Launcher Icon Density Variants</h4>
+    <p><code>implement</code> — 5 participants</p>
+    <ul>
+      <li><code>app_src_main_res_mipmap_hdpi_ic_launcher_hdpi_square</code></li>
+      <li><code>app_src_main_res_mipmap_mdpi_ic_launcher_mdpi_square</code></li>
+      <li><code>app_src_main_res_mipmap_xhdpi_ic_launcher_xhdpi_square</code></li>
+      <li><code>app_src_main_res_mipmap_xxhdpi_ic_launcher_xxhdpi_square</code></li>
+      <li><code>app_src_main_res_mipmap_xxxhdpi_ic_launcher_xxxhdpi_square</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>Device Test Infrastructure (runMainActivityScenarioTest + UiTestUtil + AppTestUtil)</h4>
+    <p><code>form</code> — 5 participants</p>
+    <ul>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_runmainactivityscenariotest</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_uitestutil_runmainactivitymediastoreautodeletescenariotest</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_apptestutil_cameraxresetrule</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_apptestutil_mediastoreinsertedflow</code></li>
+      <li><code>app_src_androidtest_java_com_google_jetpackcamera_utils_composetestruleext_composetestruleext</code></li>
+    </ul>
+  </div>
+</div>
+<hr>
+<h2 id="stats">Project Statistics</h2>
+
+<div class="grid">
+  <div class="card">
+    <h4>Graph</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>Nodes</td><td>427</td></tr>
+      <tr><td>Edges</td><td>1025</td></tr>
+      <tr><td>Hyperedges</td><td>9</td></tr>
+      <tr><td>Communities</td><td>25</td></tr>
+      <tr><td>Documented Sections</td><td>7</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h4>Edge Confidence</h4>
+    <table style="width:100%;font-size:0.85rem;">
+      <tr><td>EXTRACTED</td><td>973</td></tr>
+      <tr><td>INFERRED</td><td>52</td></tr>
+      <tr><td>AMBIGUOUS</td><td>0</td></tr>
+    </table>
+  </div>
+</div>
+
+<div style="text-align:center; padding:40px 0; color: var(--muted); font-size:0.9rem;">
+  <p>jetpack-camera-app — Architecture Documentation</p>
+  <p>Generated: 2026-08-12 10:50 UTC · graphify callflow-html</p>
+</div>
+
+</div><!-- .container -->
+
+<script>
+(function () {
+  const mermaidConfig = {
+    startOnLoad: false,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { htmlLabels: true, useMaxWidth: true },
+    themeVariables: {
+      primaryColor: '#1e293b',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#38bdf8',
+      secondaryColor: '#0f172a',
+      tertiaryColor: '#334155',
+      lineColor: '#64748b',
+      textColor: '#e2e8f0',
+    }
+  };
+
+  mermaid.initialize(mermaidConfig);
+
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function enhanceMermaidDiagrams() {
+    document.querySelectorAll('.mermaid').forEach((container) => {
+      if (container.dataset.zoomReady === 'true') return;
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+
+      container.dataset.zoomReady = 'true';
+      container.classList.add('is-enhanced');
+
+      const viewport = document.createElement('div');
+      viewport.className = 'mermaid-viewport';
+      svg.parentNode.insertBefore(viewport, svg);
+      viewport.appendChild(svg);
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-toolbar';
+      toolbar.innerHTML = [
+        '<button type="button" data-action="zoom-out" title="Zoom out">-</button>',
+        '<span class="zoom-level" data-role="level">100%</span>',
+        '<button type="button" data-action="zoom-in" title="Zoom in">+</button>',
+        '<button type="button" data-action="fit" title="Fit width">Fit</button>',
+        '<button type="button" data-action="reset" title="Reset view">Reset</button>'
+      ].join('');
+      container.insertBefore(toolbar, viewport);
+
+      const state = { scale: 1, x: 0, y: 0, dragging: false, startX: 0, startY: 0, originX: 0, originY: 0 };
+      const level = toolbar.querySelector('[data-role="level"]');
+
+      function applyTransform() {
+        svg.style.transform = `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+        level.textContent = `${Math.round(state.scale * 100)}%`;
+      }
+
+      function zoomBy(delta) {
+        state.scale = clamp(state.scale + delta, 0.25, 3);
+        applyTransform();
+      }
+
+      function reset() {
+        state.scale = 1;
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      function fitWidth() {
+        const rawWidth = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width
+          ? svg.viewBox.baseVal.width
+          : svg.getBoundingClientRect().width / state.scale;
+        if (!rawWidth) {
+          reset();
+          return;
+        }
+        state.scale = clamp((viewport.clientWidth - 48) / rawWidth, 0.25, 1.4);
+        state.x = 0;
+        state.y = 0;
+        applyTransform();
+      }
+
+      toolbar.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'zoom-in') zoomBy(0.15);
+        if (action === 'zoom-out') zoomBy(-0.15);
+        if (action === 'fit') fitWidth();
+        if (action === 'reset') reset();
+      });
+
+      viewport.addEventListener('wheel', (event) => {
+        if (!event.ctrlKey && !event.metaKey) return;
+        event.preventDefault();
+        zoomBy(event.deltaY < 0 ? 0.1 : -0.1);
+      }, { passive: false });
+
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) return;
+        state.dragging = true;
+        state.startX = event.clientX;
+        state.startY = event.clientY;
+        state.originX = state.x;
+        state.originY = state.y;
+        viewport.classList.add('is-dragging');
+        viewport.setPointerCapture(event.pointerId);
+      });
+
+      viewport.addEventListener('pointermove', (event) => {
+        if (!state.dragging) return;
+        state.x = state.originX + event.clientX - state.startX;
+        state.y = state.originY + event.clientY - state.startY;
+        applyTransform();
+      });
+
+      function endDrag(event) {
+        if (!state.dragging) return;
+        state.dragging = false;
+        viewport.classList.remove('is-dragging');
+        if (viewport.hasPointerCapture(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      viewport.addEventListener('pointerup', endDrag);
+      viewport.addEventListener('pointercancel', endDrag);
+      applyTransform();
+    });
+  }
+
+  function renderMermaid() {
+    const result = mermaid.run
+      ? mermaid.run({ querySelector: '.mermaid' })
+      : Promise.resolve();
+    Promise.resolve(result)
+      .then(enhanceMermaidDiagrams)
+      .catch((error) => {
+        console.error('Mermaid render failed:', error);
+        enhanceMermaidDiagrams();
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderMermaid);
+  } else {
+    renderMermaid();
+  }
+})();
+</script>
+
+</body>
+</html>

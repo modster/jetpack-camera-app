@@ -1,0 +1,222 @@
+{
+  "C:\\Users\\User\\jetpack-camera-app\\app\\build.gradle.kts": {
+    "mtime": 1786478342.846288,
+    "ast_hash": "529814147980750c45a3a47eefa9193b",
+    "semantic_hash": "529814147980750c45a3a47eefa9193b"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\BackgroundDeviceTest.kt": {
+    "mtime": 1786425273.7988605,
+    "ast_hash": "7dce35b59f66458601452aafc77a64dc",
+    "semantic_hash": "7dce35b59f66458601452aafc77a64dc"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\CameraEffectDeviceTest.kt": {
+    "mtime": 1786425273.8050447,
+    "ast_hash": "8946f939245e8e6af2316aa19927eb31",
+    "semantic_hash": "8946f939245e8e6af2316aa19927eb31"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\CaptureModeSettingsTest.kt": {
+    "mtime": 1786425273.8050447,
+    "ast_hash": "e97d1e21062d9be5b98c6341deae8e98",
+    "semantic_hash": "e97d1e21062d9be5b98c6341deae8e98"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\ConcurrentCameraTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "b715af406cc47dd2c61c9639b97a7d9d",
+    "semantic_hash": "b715af406cc47dd2c61c9639b97a7d9d"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\DebugOverlayTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "60e406dfbea77e86614d0c6011e748a5",
+    "semantic_hash": "60e406dfbea77e86614d0c6011e748a5"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\ExternalAutomationCompatibilityTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "77228f24ccf768a289164f8e627b3489",
+    "semantic_hash": "77228f24ccf768a289164f8e627b3489"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\FlashDeviceTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "44bec3be9d0bd08966be957d25227a54",
+    "semantic_hash": "44bec3be9d0bd08966be957d25227a54"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\FocusMeteringTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "dd8eede612fb5bc524a7feeb0ce2a59c",
+    "semantic_hash": "dd8eede612fb5bc524a7feeb0ce2a59c"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\ImageCaptureDeviceTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "a26dca487164eba7e8689d3670600cc1",
+    "semantic_hash": "a26dca487164eba7e8689d3670600cc1"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\NavigationTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "786639191164eee8954de616f8a2bc7e",
+    "semantic_hash": "786639191164eee8954de616f8a2bc7e"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\PermissionsTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "d1b2e6784dd3eb5e70c593d68ad3c8dd",
+    "semantic_hash": "d1b2e6784dd3eb5e70c593d68ad3c8dd"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\PostCaptureTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "b61018acaf9af99935c644903ab9e537",
+    "semantic_hash": "b61018acaf9af99935c644903ab9e537"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\SettingsDeviceTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "69299c025e097911a5825dd668f4f40a",
+    "semantic_hash": "69299c025e097911a5825dd668f4f40a"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\SingleLensModeTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "a39bb4fb3799b967abc1867be8cb3438",
+    "semantic_hash": "a39bb4fb3799b967abc1867be8cb3438"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\SwitchCameraTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "cc74b3cc6bde49f624a43d9f10bcd236",
+    "semantic_hash": "cc74b3cc6bde49f624a43d9f10bcd236"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\VideoAudioTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "543f6972ad7e836a8fd570a009d64f2b",
+    "semantic_hash": "543f6972ad7e836a8fd570a009d64f2b"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\VideoRecordingDeviceTest.kt": {
+    "mtime": 1786425273.8068135,
+    "ast_hash": "756502b9e2f6123cba2e6989ddf94f36",
+    "semantic_hash": "756502b9e2f6123cba2e6989ddf94f36"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\utils\\AppTestUtil.kt": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "aaf9a2c76533862b1cf1ed1174e9de31",
+    "semantic_hash": "aaf9a2c76533862b1cf1ed1174e9de31"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\utils\\ComposeTestRuleExt.kt": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "ba3a294f6fd6d034e285795d73eb86b7",
+    "semantic_hash": "ba3a294f6fd6d034e285795d73eb86b7"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\utils\\MetaDataRetrieverExt.kt": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "c310b82f13824e4eaf5a444bda063b63",
+    "semantic_hash": "c310b82f13824e4eaf5a444bda063b63"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\androidTest\\java\\com\\google\\jetpackcamera\\utils\\UiTestUtil.kt": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "1132646fc9a138b1e5b521873f35d36f",
+    "semantic_hash": "1132646fc9a138b1e5b521873f35d36f"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\AppModule.kt": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "cf74d2fd5492f312f9f7e360e9fe1943",
+    "semantic_hash": "cf74d2fd5492f312f9f7e360e9fe1943"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\AppSettingsModule.kt": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "f9c08cd6663ef85298a57356c86a3785",
+    "semantic_hash": "f9c08cd6663ef85298a57356c86a3785"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\JcaFilePathGenerator.kt": {
+    "mtime": 1786425273.823356,
+    "ast_hash": "7f7cb11a854052bb39f410afd57f57fa",
+    "semantic_hash": "7f7cb11a854052bb39f410afd57f57fa"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\JetpackCameraApplication.kt": {
+    "mtime": 1786425273.8237364,
+    "ast_hash": "71f0d1b318d9e20b63d2564550d2e22c",
+    "semantic_hash": "71f0d1b318d9e20b63d2564550d2e22c"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\MainActivity.kt": {
+    "mtime": 1786477723.3265166,
+    "ast_hash": "12ddcc916b42f6df1e229a2af85f0f64",
+    "semantic_hash": "12ddcc916b42f6df1e229a2af85f0f64"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\MainActivityViewModel.kt": {
+    "mtime": 1786425273.8237364,
+    "ast_hash": "597b5e482ff706a2a50f5a97dc89534b",
+    "semantic_hash": "597b5e482ff706a2a50f5a97dc89534b"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\ui\\JcaApp.kt": {
+    "mtime": 1786425273.825247,
+    "ast_hash": "59aa49940419a20ae4f19198405c1fb1",
+    "semantic_hash": "59aa49940419a20ae4f19198405c1fb1"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\ui\\Routes.kt": {
+    "mtime": 1786425273.825247,
+    "ast_hash": "55c5396b0f77be81bbfebab5d5ec2e9d",
+    "semantic_hash": "55c5396b0f77be81bbfebab5d5ec2e9d"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\ui\\theme\\Color.kt": {
+    "mtime": 1786431414.143109,
+    "ast_hash": "478b94fe243000a2d5571a26d7eec1de",
+    "semantic_hash": "478b94fe243000a2d5571a26d7eec1de"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\ui\\theme\\Theme.kt": {
+    "mtime": 1786431347.703216,
+    "ast_hash": "2d43ef4dcf726355630f1864401ad7e9",
+    "semantic_hash": "2d43ef4dcf726355630f1864401ad7e9"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\java\\com\\google\\jetpackcamera\\ui\\theme\\Type.kt": {
+    "mtime": 1786477691.132542,
+    "ast_hash": "40c4fb9bea16dcf36cee324704cc7f79",
+    "semantic_hash": "40c4fb9bea16dcf36cee324704cc7f79"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\ic_launcher-playstore.png": {
+    "mtime": 1786425273.81506,
+    "ast_hash": "b82c49065df78eb1a1ef7ce3096ef772",
+    "semantic_hash": "b82c49065df78eb1a1ef7ce3096ef772"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.webp": {
+    "mtime": 1786425273.8316538,
+    "ast_hash": "eb80e086dff064b3e7d772116768ce17",
+    "semantic_hash": "eb80e086dff064b3e7d772116768ce17"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_round.webp": {
+    "mtime": 1786425273.8316538,
+    "ast_hash": "e69544f5567268684ce1f09da7eb8aa7",
+    "semantic_hash": "e69544f5567268684ce1f09da7eb8aa7"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.webp": {
+    "mtime": 1786425273.8316538,
+    "ast_hash": "f0991dda85b79b43cb7d7d0ba3c3c2b4",
+    "semantic_hash": "f0991dda85b79b43cb7d7d0ba3c3c2b4"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_round.webp": {
+    "mtime": 1786425273.8316538,
+    "ast_hash": "dc1d1a156781641f103ea89fc12e2ab7",
+    "semantic_hash": "dc1d1a156781641f103ea89fc12e2ab7"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.webp": {
+    "mtime": 1786425273.835217,
+    "ast_hash": "1205d87aab545a1686fda24702e2d74c",
+    "semantic_hash": "1205d87aab545a1686fda24702e2d74c"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_round.webp": {
+    "mtime": 1786425273.835217,
+    "ast_hash": "ff77b21bce87f9ad3a69b83540baf8b0",
+    "semantic_hash": "ff77b21bce87f9ad3a69b83540baf8b0"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.webp": {
+    "mtime": 1786425273.835217,
+    "ast_hash": "c954f2b80e80b168e5b4e8085e2672ae",
+    "semantic_hash": "c954f2b80e80b168e5b4e8085e2672ae"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_round.webp": {
+    "mtime": 1786425273.835217,
+    "ast_hash": "2e8785515f8f891ab3e2f62329341f8c",
+    "semantic_hash": "2e8785515f8f891ab3e2f62329341f8c"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.webp": {
+    "mtime": 1786425273.835217,
+    "ast_hash": "30750d0403604c4a15a690b565ab0108",
+    "semantic_hash": "30750d0403604c4a15a690b565ab0108"
+  },
+  "C:\\Users\\User\\jetpack-camera-app\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_round.webp": {
+    "mtime": 1786425273.835217,
+    "ast_hash": "8298301a9e0c2f5671431c1bb11e3a82",
+    "semantic_hash": "8298301a9e0c2f5671431c1bb11e3a82"
+  }
+}

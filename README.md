@@ -12,6 +12,6 @@ Apache 2. See LLICENSE file for more info.
 
 ## Acknowledgements
 
-* Thank you to all the giants who let ants like me stand on thier shoulders. The world looks so beautiful from up here and I never would have seen it were it not for you!*
+  Thank you to all the giants who let me stand on thier shoulders. I promise to pay it forward.*
 
 ---
